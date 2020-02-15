@@ -3,7 +3,6 @@ package unstablegithubref
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -86,7 +85,7 @@ func mustGetIssueMessage(workflowName string, jobName string, unstableReason Uns
 	case UnknownReason:
 		return "unknown reason"
 	case UnsupportedRef:
-		return "unsuppoted ref"
+		return "unsupported ref"
 	case NoSpecifiedVersion:
 		return "no specified version"
 	case IsMaster:
@@ -105,34 +104,6 @@ func mustGetIssueMessage(workflowName string, jobName string, unstableReason Uns
 	return ""
 }
 
-// refToParts takes a uses reference and splits into owner, repo, path and ref
-func refToParts(ref string) (string, string, string, string, error) {
-	splitRef := strings.Split(ref, "@")
-
-	if len(splitRef) != 2 {
-		return "", "", "", "", errors.New("unsupported reference format")
-	}
-
-	repoParts := splitRef[0]
-	tag := splitRef[1]
-
-	splitRepoParts := strings.Split(repoParts, "/")
-	owner := ""
-	repo := ""
-	path := ""
-
-	if len(splitRepoParts) > 2 {
-		owner = splitRepoParts[0]
-		repo = splitRepoParts[1]
-		path = strings.Join(splitRepoParts[2:], string(os.PathSeparator))
-	} else if len(splitRepoParts) == 2 {
-		owner = splitRepoParts[0]
-		repo = splitRepoParts[1]
-	}
-
-	return owner, repo, path, tag, nil
-}
-
 func isGitHubRefStable(callingRepoID int64, ref string) (bool, UnstableReason, error) {
 	// relative paths are very stable
 	if strings.HasPrefix(ref, ".") {
@@ -144,14 +115,14 @@ func isGitHubRefStable(callingRepoID int64, ref string) (bool, UnstableReason, e
 		return true, NoSpecifiedVersion, nil
 	}
 
-	owner, repo, path, tag, err := refToParts(ref)
+	owner, repo, _, tag, err := refToParts(ref)
 	if err != nil {
 		return false, UnknownReason, errors.Wrap(err, "failed to split ref")
 	}
 
-	if path != "" {
-		return false, UnsupportedRef, nil
-	}
+	// if path != "" {
+	// 	return false, UnsupportedRef, nil
+	// }
 
 	if tag == "master" {
 		return false, IsMaster, nil
