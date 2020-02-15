@@ -34,16 +34,16 @@ endef
 
 .PHONY: test
 test:
-	go test -tags "$(BUILDTAGS)" ./pkg/... ./cmd/... ./ffi/... -coverprofile cover.out
+	go test ./pkg/... ./cmd/... -coverprofile cover.out
 
 .PHONY: proaction
 proaction: fmt vet
-	go build ${LDFLAGS} -o bin/proaction -tags "$(BUILDTAGS)" github.com/proactionhq/proaction/cmd/proaction
+	go build ${LDFLAGS} -o bin/proaction github.com/proactionhq/proaction/cmd/proaction
 
 .PHONY: fmt
 fmt:
-	go fmt ./pkg/... ./cmd/... ./ffi/...
+	go fmt ./pkg/... ./cmd/...
 
 .PHONY: vet
 vet:
-	go vet -tags "$(BUILDTAGS)" ./pkg/... ./cmd/... ./ffi/...
+	go vet ./pkg/... ./cmd/... 
