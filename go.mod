@@ -4,9 +4,15 @@ go 1.13
 
 require (
 	github.com/Masterminds/semver/v3 v3.0.3
+	github.com/bradleyfalzon/ghinstallation v1.1.1 // indirect
+	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-github/v28 v28.1.1
 	github.com/pkg/errors v0.8.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.4.0
+	go.uber.org/zap v1.10.0
 	go.undefinedlabs.com/scopeagent v0.1.11
+	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
+	gopkg.in/yaml.v2 v2.2.4
 )

@@ -1,0 +1,71 @@
+name: "Build, test and deploy"
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release'
+    steps:
+      - uses: azure/docker-login@v1
+        with:
+          username: proactionbot
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - uses: actions/checkout@master
+      - run: make -C api publish
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release'
+    env:
+      SHA: $(echo ${GITHUB_SHA} | cut -c1-7)
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions/checkout@master
+        name: "check out gitops-deploy repo"
+        with:
+          repository: proactionhq/gitops-deploy
+          token: ${{ secrets.GITOPS_DEPLOY_TOKEN }}
+          path: gitops-deploy
+
+      - name: "kustomize build migrations"
+        uses: marccampbell/kustomize-github-action@set-image
+        with:
+          kustomize_version: "2.0.3"
+          kustomize_build_dir: "migrations/kustomize/overlays/staging"
+          kustomize_output_file: "gitops-deploy/staging/schema.yaml"
+
+      - uses: azure/docker-login@v1
+        with:
+          username: proactionbot
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: "kustomize build api"
+        uses: marccampbell/kustomize-github-action@set-image
+        with:
+          kustomize_version: "2.0.3"
+          kustomize_build_dir: "api/kustomize/overlays/staging"
+          kustomize_output_file: "gitops-deploy/staging/api.yaml"
+          kustomize_set_image: "proaction-api=proactionhq/api:${{ github.sha }}"
+
+      - name: "kustomize build web"
+        uses: marccampbell/kustomize-github-action@set-image
+        with:
+          kustomize_version: "2.0.3"
+          kustomize_build_dir: "web/kustomize/overlays/staging"
+          kustomize_output_file: "gitops-deploy/staging/web.yaml"
+          kustomize_set_image: "proaction-web=proactionhq/web:${{ github.sha }}"
+
+      - name: "commit staging manifests"
+        run: |
+          git config --global user.email "deploy@proactionhq.io"
+          git config --global user.name "Proaction Bot"
+          cd gitops-deploy/staging && git add . && git commit --allow-empty -m "Deploy staging from ${GITHUB_REF}"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITOPS_DEPLOY_TOKEN }}
+          directory: gitops-deploy/staging
+          repository: proactionhq/gitops-deploy
