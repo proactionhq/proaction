@@ -43,6 +43,13 @@ func ScanCmd() *cobra.Command {
 
 			fmt.Printf("%#v", s.GetOutput())
 
+			if s.OriginalContent != s.RemediatedContent {
+				err := ioutil.WriteFile(args[0], []byte(s.RemediatedContent), 0755)
+				if err != nil {
+					return errors.Wrap(err, "failed to update workflow with remediations")
+				}
+
+			}
 			return nil
 		},
 	}
