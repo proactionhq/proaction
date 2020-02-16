@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
+	"github.com/proactionhq/proaction/pkg/proaction"
 	"github.com/proactionhq/proaction/pkg/scanner"
 	"github.com/proactionhq/proaction/pkg/workflow"
 	"github.com/spf13/cobra"
@@ -23,6 +24,10 @@ func ScanCmd() *cobra.Command {
 			viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := proaction.Init(viper.GetViper()); err != nil {
+				fmt.Printf("%s\n", err.Error())
+			}
+
 			content, err := ioutil.ReadFile(args[0])
 			if err != nil {
 				return errors.Wrap(err, "failed to read workflow")

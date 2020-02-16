@@ -18,6 +18,8 @@ func RootCmd() *cobra.Command {
 		},
 	}
 
+	cmd.PersistentFlags().Bool("no-track", false, "set to disable all anonymized tracking")
+
 	cobra.OnInitialize(initConfig)
 
 	cmd.AddCommand(ScanCmd())
