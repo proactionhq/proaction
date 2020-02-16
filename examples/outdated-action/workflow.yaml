@@ -1,0 +1,35 @@
+name: "Example with outdated GitHub Actions"
+on:
+  - pull_request
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v1
+
+      - name: "terraform fmt"
+        uses: hashicorp/terraform-github-actions@v0.7.1
+        with:
+          tf_actions_version: 0.12.13
+          tf_actions_subcommand: "fmt"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "terraform init"
+        uses: hashicorp/terraform-github-actions@271eb39
+        with:
+          tf_actions_version: 0.12.13
+          tf_actions_subcommand: "init"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "terraform plan"
+        uses: hashicorp/terraform-github-actions@49492a0
+        with:
+          tf_actions_version: 0.12.13
+          tf_actions_subcommand: "plan"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}          

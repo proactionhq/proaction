@@ -18,7 +18,7 @@ func Run(originalWorkflowContent string, parsedWorkflow *workflow.ParsedWorkflow
 
 	lastRemediateWorkflowContent := originalWorkflowContent
 	for _, i := range issues {
-		afterWorkflow, err := remediateWorkflow(parsedWorkflow, lastRemediateWorkflowContent, i)
+		afterWorkflow, err := remediateWorkflow(lastRemediateWorkflowContent, i)
 		if err != nil {
 			return "", nil, errors.Wrap(err, "failed to remediate workflow")
 		}

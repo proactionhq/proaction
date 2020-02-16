@@ -32,7 +32,7 @@ func Init(v *viper.Viper) error {
 	}
 
 	e := Event{
-		Name: "init",
+		Name: "scan",
 	}
 	b, err := json.Marshal(e)
 	if err != nil {

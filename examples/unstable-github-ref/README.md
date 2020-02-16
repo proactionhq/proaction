@@ -1,6 +1,6 @@
 # Unstable GitHub Ref Example
 
-This example workflow shows how the [unstable github ref](https://docs.proaction.io) works.
+This example workflow shows how the [unstable github ref](https://docs.proaction.io) check works.
 
 The workflow in this example has several steps:
 

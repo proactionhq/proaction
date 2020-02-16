@@ -1,13 +1,11 @@
 package unstablegithubref
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/proactionhq/proaction/pkg/githubapi"
 	"github.com/proactionhq/proaction/pkg/issue"
 	"github.com/proactionhq/proaction/pkg/ref"
 	"github.com/proactionhq/proaction/pkg/workflow"
@@ -26,16 +24,6 @@ const (
 	TagNotFound        UnstableReason = iota
 )
 
-type PossiblyStableTag struct {
-	TagName   string
-	CommitSHA string
-}
-
-type Branch struct {
-	BranchName string
-	CommitSHA  string
-}
-
 func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
@@ -50,7 +38,7 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow)
 				continue
 			}
 
-			isStable, unstableReason, stableRef, err := isGitHubRefStable(0, step.Uses)
+			isStable, unstableReason, stableRef, err := isGitHubRefStable(step.Uses)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check is github ref stable")
 			}
@@ -106,7 +94,7 @@ func mustGetIssueMessage(workflowName string, jobName string, unstableReason Uns
 	return ""
 }
 
-func isGitHubRefStable(callingRepoID int64, githubRef string) (bool, UnstableReason, string, error) {
+func isGitHubRefStable(githubRef string) (bool, UnstableReason, string, error) {
 	// relative paths are very stable
 	if strings.HasPrefix(githubRef, ".") {
 		return true, IsStable, githubRef, nil
@@ -122,7 +110,7 @@ func isGitHubRefStable(callingRepoID int64, githubRef string) (bool, UnstableRea
 		return false, UnknownReason, "", errors.Wrap(err, "failed to split ref")
 	}
 
-	possiblyStableTag, maybeBranch, isCommit, err := determineGitHubRefType(0, owner, repo, tag)
+	possiblyStableTag, maybeBranch, isCommit, err := ref.DetermineGitHubRefType(owner, repo, tag)
 	if err != nil {
 		return false, UnknownReason, "", errors.Wrap(err, "failed to get ref type")
 	}
@@ -200,53 +188,4 @@ func isGitHubRefStable(callingRepoID int64, githubRef string) (bool, UnstableRea
 	}
 
 	return isStable, unstableReason, updatedRef, nil
-}
-
-func determineGitHubRefType(callingRepoID int64, owner string, repo string, tag string) (*PossiblyStableTag, *Branch, bool, error) {
-	githubClient := githubapi.NewGitHubClient()
-	tagResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, fmt.Sprintf("tags/%s", tag))
-	if err != nil {
-		if githubResponse.Response.StatusCode != 404 {
-			return nil, nil, false, errors.Wrap(err, "failed to get tag ref")
-		}
-	}
-
-	if tagResponse != nil {
-		getTagResponse, _, err := githubClient.Git.GetTag(context.Background(), owner, repo, tagResponse.Object.GetSHA())
-		if err != nil {
-			return nil, nil, false, errors.Wrap(err, "failed to get commit sha from tag")
-		}
-
-		return &PossiblyStableTag{
-			TagName:   tag,
-			CommitSHA: getTagResponse.Object.GetSHA(),
-		}, nil, false, nil
-	}
-
-	branchResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, fmt.Sprintf("heads/%s", tag))
-	if err != nil {
-		if githubResponse.Response.StatusCode != 404 {
-			return nil, nil, false, errors.Wrap(err, "failed to get head ref")
-		}
-	}
-
-	if branchResponse != nil {
-		return nil, &Branch{
-			BranchName: tag,
-			CommitSHA:  branchResponse.Object.GetSHA(),
-		}, false, nil
-	}
-
-	commitResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, tag)
-	if err != nil {
-		if githubResponse.Response.StatusCode != 404 {
-			return nil, nil, false, errors.Wrap(err, "failed to get commit ref")
-		}
-	}
-
-	if commitResponse != nil {
-		return nil, nil, true, nil
-	}
-
-	return nil, nil, false, nil
 }
