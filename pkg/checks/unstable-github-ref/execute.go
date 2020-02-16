@@ -117,14 +117,10 @@ func isGitHubRefStable(callingRepoID int64, githubRef string) (bool, UnstableRea
 		return true, NoSpecifiedVersion, githubRef, nil
 	}
 
-	owner, repo, _, tag, err := ref.RefToParts(githubRef)
+	owner, repo, path, tag, err := ref.RefToParts(githubRef)
 	if err != nil {
 		return false, UnknownReason, "", errors.Wrap(err, "failed to split ref")
 	}
-
-	// if path != "" {
-	// 	return false, UnsupportedRef, nil
-	// }
 
 	possiblyStableTag, maybeBranch, isCommit, err := determineGitHubRefType(0, owner, repo, tag)
 	if err != nil {
@@ -133,9 +129,17 @@ func isGitHubRefStable(callingRepoID int64, githubRef string) (bool, UnstableRea
 
 	updatedRef := ""
 	if maybeBranch != nil {
-		updatedRef = fmt.Sprintf("%s/%s@%s", owner, repo, maybeBranch.CommitSHA)
+		if path == "" {
+			updatedRef = fmt.Sprintf("%s/%s@%s", owner, repo, maybeBranch.CommitSHA)
+		} else {
+			updatedRef = fmt.Sprintf("%s/%s/%s@%s", owner, repo, path, maybeBranch.CommitSHA)
+		}
 	} else if possiblyStableTag != nil {
-		updatedRef = fmt.Sprintf("%s/%s@%s", owner, repo, possiblyStableTag.CommitSHA)
+		if path == "" {
+			updatedRef = fmt.Sprintf("%s/%s@%s", owner, repo, possiblyStableTag.CommitSHA)
+		} else {
+			updatedRef = fmt.Sprintf("%s/%s/%s@%s", owner, repo, path, possiblyStableTag.CommitSHA)
+		}
 	}
 
 	if tag == "master" {
