@@ -37,7 +37,6 @@ func executeOutdatedActionCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkfl
 			}
 
 			if !isCommit {
-				fmt.Printf("%s is not a commit \n", tag)
 				continue
 			}
 

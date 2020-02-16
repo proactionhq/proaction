@@ -34,7 +34,7 @@ endef
 
 .PHONY: test
 test:
-	go test ./pkg/... ./cmd/... -coverprofile cover.out
+	go test ./pkg/... ./cmd/... ./internal/... -coverprofile cover.out
 
 .PHONY: proaction
 proaction: fmt vet
@@ -42,8 +42,8 @@ proaction: fmt vet
 
 .PHONY: fmt
 fmt:
-	go fmt ./pkg/... ./cmd/...
+	go fmt ./pkg/... ./internal/... ./cmd/...
 
 .PHONY: vet
 vet:
-	go vet ./pkg/... ./cmd/... 
+	go vet ./pkg/... ./internal/... ./cmd/... 
