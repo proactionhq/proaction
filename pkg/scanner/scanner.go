@@ -38,7 +38,7 @@ func (s *Scanner) EnableAllChecks() {
 func (s *Scanner) ScanWorkflow(parsedWorkflow *workflow.ParsedWorkflow) error {
 	for _, check := range s.EnabledChecks {
 		if check == "unstable-github-ref" {
-			updatedContent, issues, err := unstablegithubref.Run(s.OriginalContent, parsedWorkflow)
+			updatedContent, issues, err := unstablegithubref.Run(s.getContent(), parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-github ref check")
 			}
@@ -46,7 +46,7 @@ func (s *Scanner) ScanWorkflow(parsedWorkflow *workflow.ParsedWorkflow) error {
 			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "unstable-docker-tag" {
-			updatedContent, issues, err := unstabledockertag.Run(s.OriginalContent, parsedWorkflow)
+			updatedContent, issues, err := unstabledockertag.Run(s.getContent(), parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-docker-tag check")
 			}
@@ -54,7 +54,7 @@ func (s *Scanner) ScanWorkflow(parsedWorkflow *workflow.ParsedWorkflow) error {
 			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "outdated-action" {
-			updatedContent, issues, err := outdatedaction.Run(s.OriginalContent, parsedWorkflow)
+			updatedContent, issues, err := outdatedaction.Run(s.getContent(), parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable outdated-action check")
 			}
@@ -62,7 +62,7 @@ func (s *Scanner) ScanWorkflow(parsedWorkflow *workflow.ParsedWorkflow) error {
 			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "unfork-action" {
-			updatedContent, issues, err := unforkaction.Run(s.OriginalContent, parsedWorkflow)
+			updatedContent, issues, err := unforkaction.Run(s.getContent(), parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unfork-action check")
 			}
@@ -73,6 +73,14 @@ func (s *Scanner) ScanWorkflow(parsedWorkflow *workflow.ParsedWorkflow) error {
 	}
 
 	return nil
+}
+
+func (s Scanner) getContent() string {
+	if s.RemediatedContent != "" {
+		return s.RemediatedContent
+	}
+
+	return s.OriginalContent
 }
 
 func (s Scanner) GetOutput() string {
