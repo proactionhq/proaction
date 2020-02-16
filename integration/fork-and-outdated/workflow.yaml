@@ -1,0 +1,16 @@
+name: ""
+on:
+  - pull_request
+
+jobs:
+  terraform:
+    name: "simple"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "not-merged"
+        uses: marccampbell/proaction-test-actions@fork-update
+
+      - name: "merged"
+        uses: marccampbell/proaction-test-actions@fork-update-merged

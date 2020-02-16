@@ -58,7 +58,6 @@ func executeOutdatedActionCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkfl
 
 			latestCommit := getBranchResponse.GetCommit().GetSHA()[0:7]
 
-			fmt.Printf("%s\n", latestCommit)
 			if tag == latestCommit {
 				continue
 			}

@@ -1,3 +1,4 @@
 bin/
 cover.out
 dist/
+integration/**/actual.yaml

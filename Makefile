@@ -47,3 +47,7 @@ fmt:
 .PHONY: vet
 vet:
 	go vet ./pkg/... ./internal/... ./cmd/... 
+
+.PHONY: integration
+integration: proaction
+	make -C integration run

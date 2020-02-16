@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/go-github/v28/github"
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/pkg/githubapi"
 )
@@ -50,9 +51,9 @@ func RefToParts(ref string) (string, string, string, string, error) {
 
 // DetermineGitHubRefType will use the GitHub API to determine if
 // a passed ref is a commit, branch or tag
-func DetermineGitHubRefType(owner string, repo string, tag string) (*PossiblyStableTag, *Branch, bool, error) {
+func DetermineGitHubRefType(owner string, repo string, unknownRef string) (*PossiblyStableTag, *Branch, bool, error) {
 	githubClient := githubapi.NewGitHubClient()
-	tagResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, fmt.Sprintf("tags/%s", tag))
+	tagResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, fmt.Sprintf("tags/%s", unknownRef))
 	if err != nil {
 		if githubResponse.Response.StatusCode != 404 {
 			return nil, nil, false, errors.Wrap(err, "failed to get tag ref")
@@ -61,12 +62,12 @@ func DetermineGitHubRefType(owner string, repo string, tag string) (*PossiblySta
 
 	if tagResponse != nil {
 		return &PossiblyStableTag{
-			TagName:   tag,
+			TagName:   unknownRef,
 			CommitSHA: tagResponse.Object.GetSHA()[0:7],
 		}, nil, false, nil
 	}
 
-	branchResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, fmt.Sprintf("heads/%s", tag))
+	branchResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, fmt.Sprintf("heads/%s", unknownRef))
 	if err != nil {
 		if githubResponse.Response.StatusCode != 404 {
 			return nil, nil, false, errors.Wrap(err, "failed to get head ref")
@@ -75,12 +76,12 @@ func DetermineGitHubRefType(owner string, repo string, tag string) (*PossiblySta
 
 	if branchResponse != nil {
 		return nil, &Branch{
-			BranchName: tag,
+			BranchName: unknownRef,
 			CommitSHA:  branchResponse.Object.GetSHA()[0:7],
 		}, false, nil
 	}
 
-	commitResponse, githubResponse, err := githubClient.Repositories.GetCommit(context.Background(), owner, repo, tag)
+	commitResponse, githubResponse, err := githubClient.Repositories.GetCommit(context.Background(), owner, repo, unknownRef)
 	if err != nil {
 		if githubResponse.Response.StatusCode != 404 {
 			return nil, nil, false, errors.Wrap(err, "failed to get commit ref")
@@ -92,4 +93,33 @@ func DetermineGitHubRefType(owner string, repo string, tag string) (*PossiblySta
 	}
 
 	return nil, nil, false, nil
+}
+
+func IsSHAInRepo(owner string, repo string, commitSHA string) (bool, error) {
+	githubClient := githubapi.NewGitHubClient()
+
+	// the github api returns the same result if a commit
+	// is present only in a fork... so we need to be
+	// a little creative here
+
+	opts := github.ListOptions{}
+	listBranchesResponse, _, err := githubClient.Repositories.ListBranches(context.Background(), owner, repo, &opts)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to list branches for repo")
+	}
+
+	for _, branch := range listBranchesResponse {
+		compareResponse, _, err := githubClient.Repositories.CompareCommits(context.Background(), owner, repo, branch.GetName(), commitSHA)
+		if err != nil {
+			return false, errors.Wrap(err, "failed to compare commits")
+		}
+
+		if compareResponse.GetStatus() == "behind" || compareResponse.GetStatus() == "identical" {
+			return true, nil
+		}
+
+		// ahead or diverged are not in the branch
+	}
+
+	return false, nil
 }
