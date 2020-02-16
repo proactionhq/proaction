@@ -50,7 +50,7 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow)
 			message := mustGetIssueMessage(parsedWorkflow.Name, jobName, unstableReason, step)
 
 			i := issue.Issue{
-				CheckType: "unstable-github-ref",
+				CheckType: CheckName,
 				CheckData: map[string]interface{}{
 					"jobName":             jobName,
 					"unstableReason":      unstableReason,

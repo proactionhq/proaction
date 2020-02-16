@@ -45,3 +45,38 @@ func Test_RefToParts(t *testing.T) {
 		})
 	}
 }
+
+func Test_DetermineGitHubRefType(t *testing.T) {
+	tests := []struct {
+		name                      string
+		owner                     string
+		repo                      string
+		tag                       string
+		expectedPossiblyStableTag *PossiblyStableTag
+		expectedBranch            *Branch
+		expectedIsCommit          bool
+	}{
+		{
+			name:                      "a commit sha",
+			owner:                     "hashicorp",
+			repo:                      "terraform-github-actions",
+			tag:                       "271eb39",
+			expectedPossiblyStableTag: nil,
+			expectedBranch:            nil,
+			expectedIsCommit:          true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := require.New(t)
+
+			actualPossiblyStableTag, actualBranch, actualIsCommit, err := DetermineGitHubRefType(test.owner, test.repo, test.tag)
+			req.NoError(err)
+
+			assert.Equal(t, test.expectedPossiblyStableTag, actualPossiblyStableTag)
+			assert.Equal(t, test.expectedBranch, actualBranch)
+			assert.Equal(t, test.expectedIsCommit, actualIsCommit)
+		})
+	}
+}

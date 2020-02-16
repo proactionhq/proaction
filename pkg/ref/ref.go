@@ -60,14 +60,9 @@ func DetermineGitHubRefType(owner string, repo string, tag string) (*PossiblySta
 	}
 
 	if tagResponse != nil {
-		getTagResponse, _, err := githubClient.Git.GetTag(context.Background(), owner, repo, tagResponse.Object.GetSHA())
-		if err != nil {
-			return nil, nil, false, errors.Wrap(err, "failed to get commit sha from tag")
-		}
-
 		return &PossiblyStableTag{
 			TagName:   tag,
-			CommitSHA: getTagResponse.Object.GetSHA()[0:7],
+			CommitSHA: tagResponse.Object.GetSHA()[0:7],
 		}, nil, false, nil
 	}
 
@@ -85,7 +80,7 @@ func DetermineGitHubRefType(owner string, repo string, tag string) (*PossiblySta
 		}, false, nil
 	}
 
-	commitResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, tag)
+	commitResponse, githubResponse, err := githubClient.Repositories.GetCommit(context.Background(), owner, repo, tag)
 	if err != nil {
 		if githubResponse.Response.StatusCode != 404 {
 			return nil, nil, false, errors.Wrap(err, "failed to get commit ref")
