@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/internal/event"
@@ -27,7 +28,9 @@ func ScanCmd() *cobra.Command {
 			v := viper.GetViper()
 
 			if err := event.Init(v); err != nil {
-				fmt.Printf("%s\n", err.Error())
+				if v.GetBool("debug") {
+					fmt.Printf("%s\n", err.Error())
+				}
 			}
 
 			content, err := ioutil.ReadFile(args[0])
@@ -56,6 +59,11 @@ func ScanCmd() *cobra.Command {
 				return errors.Wrap(err, "failed to scan workflow")
 			}
 
+			if len(s.Issues) == 0 {
+				fmt.Println("No recommendations found!")
+				os.Exit(0)
+			}
+
 			fmt.Printf("%#v", s.GetOutput())
 
 			if s.OriginalContent != s.RemediatedContent {
@@ -65,6 +73,8 @@ func ScanCmd() *cobra.Command {
 				}
 
 			}
+
+			os.Exit(1)
 			return nil
 		},
 	}
@@ -72,6 +82,6 @@ func ScanCmd() *cobra.Command {
 	cmd.Flags().StringSlice("check", []string{}, "check(s) to run. if empty, all checks will run")
 	cmd.Flags().Bool("dry-run", false, "when set, proaction will print the output and recommended changes, but will not make changes to the file")
 	cmd.Flags().Bool("quiet", false, "when set, proaction will not print explanations but will only update the workflow files with recommendations")
-
+	cmd.Flags().Bool("debug", false, "when set, echo debug statements")
 	return cmd
 }
