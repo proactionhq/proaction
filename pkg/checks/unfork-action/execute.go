@@ -15,7 +15,7 @@ import (
 func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
- s	for jobName, job := range parsedWorkflow.Jobs {
+	for jobName, job := range parsedWorkflow.Jobs {
 		for _, step := range job.Steps {
 			if step.Uses == "" {
 				continue

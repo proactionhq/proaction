@@ -1,0 +1,37 @@
+project_name: proaction
+release:
+  github:
+    owner: proactionhq
+    name: proaction
+builds:
+  - id: proaction
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - "386"
+    env:
+      - CGO_ENABLED=0
+    main: cmd/proaction/main.go
+    ldflags: -s -w
+      -X github.com/proactionhq/proaction/pkg/version.version={{.Version}}
+      -X github.com/proactionhq/proaction/pkg/version.gitSHA={{.Commit}}
+      -X github.com/proactionhq/proaction/pkg/version.buildTime={{.Date}}
+      -extldflags "-static"
+    binary: proaction
+    hooks: {}
+archives:
+  - id: proaction
+    builds:
+      - proaction
+    format: tar.gz
+    name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - licence*
+      - LICENCE*
+      - license*
+      - LICENSE*
+      - readme*
+      - README*
