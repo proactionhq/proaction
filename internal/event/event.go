@@ -1,4 +1,4 @@
-package proaction
+package event
 
 import (
 	"bytes"

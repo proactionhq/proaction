@@ -79,7 +79,7 @@ func getGoInfo() GoInfo {
 // IsLatestRelease queries github for the latest release in the project repo. If that release has a semver greater
 // than the current release, it returns false and the new latest release semver. Otherwise, it returns true or error
 func IsLatestRelease() (bool, string, error) {
-	return isLatestRelease(http.DefaultClient, "https://proaction.io")
+	return isLatestRelease(http.DefaultClient, "https://oss.proaction.io/version")
 }
 
 func isLatestRelease(client *http.Client, upstream string) (bool, string, error) {

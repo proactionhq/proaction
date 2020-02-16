@@ -1,4 +1,4 @@
-package unstablegithubref
+package ref
 
 import (
 	"os"
@@ -7,8 +7,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// refToParts takes a uses reference and splits into owner, repo, path and ref
-func refToParts(ref string) (string, string, string, string, error) {
+// RefToParts takes a uses reference and splits into owner, repo, path and ref
+func RefToParts(ref string) (string, string, string, string, error) {
 	splitRef := strings.Split(ref, "@")
 
 	if len(splitRef) < 2 {

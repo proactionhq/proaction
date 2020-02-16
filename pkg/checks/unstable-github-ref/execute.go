@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/pkg/githubapi"
 	"github.com/proactionhq/proaction/pkg/issue"
+	"github.com/proactionhq/proaction/pkg/ref"
 	"github.com/proactionhq/proaction/pkg/workflow"
 )
 
@@ -49,7 +50,7 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow)
 				continue
 			}
 
-			isStable, unstableReason, err := isGitHubRefStable(0, step.Uses)
+			isStable, unstableReason, stableRef, err := isGitHubRefStable(0, step.Uses)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check is github ref stable")
 			}
@@ -63,9 +64,10 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow)
 			i := issue.Issue{
 				CheckType: "unstable-github-ref",
 				CheckData: map[string]interface{}{
-					"jobName":        jobName,
-					"unstableReason": unstableReason,
-					"githubRef":      step.Uses,
+					"jobName":             jobName,
+					"unstableReason":      unstableReason,
+					"originalGitHubRef":   step.Uses,
+					"remediatedGitHubRef": stableRef,
 				},
 				Message:      message,
 				CanRemediate: true,
@@ -104,44 +106,50 @@ func mustGetIssueMessage(workflowName string, jobName string, unstableReason Uns
 	return ""
 }
 
-func isGitHubRefStable(callingRepoID int64, ref string) (bool, UnstableReason, error) {
+func isGitHubRefStable(callingRepoID int64, githubRef string) (bool, UnstableReason, string, error) {
 	// relative paths are very stable
-	if strings.HasPrefix(ref, ".") {
-		return true, IsStable, nil
+	if strings.HasPrefix(githubRef, ".") {
+		return true, IsStable, githubRef, nil
 	}
 
 	// if there's no @ sign, then it's unstable
-	if !strings.Contains(ref, "@") {
-		return true, NoSpecifiedVersion, nil
+	if !strings.Contains(githubRef, "@") {
+		return true, NoSpecifiedVersion, githubRef, nil
 	}
 
-	owner, repo, _, tag, err := refToParts(ref)
+	owner, repo, _, tag, err := ref.RefToParts(githubRef)
 	if err != nil {
-		return false, UnknownReason, errors.Wrap(err, "failed to split ref")
+		return false, UnknownReason, "", errors.Wrap(err, "failed to split ref")
 	}
 
 	// if path != "" {
 	// 	return false, UnsupportedRef, nil
 	// }
 
+	possiblyStableTag, maybeBranch, isCommit, err := determineGitHubRefType(0, owner, repo, tag)
+	if err != nil {
+		return false, UnknownReason, "", errors.Wrap(err, "failed to get ref type")
+	}
+
+	updatedRef := ""
+	if maybeBranch != nil {
+		updatedRef = fmt.Sprintf("%s/%s@%s", owner, repo, maybeBranch.CommitSHA)
+	} else if possiblyStableTag != nil {
+		updatedRef = fmt.Sprintf("%s/%s@%s", owner, repo, possiblyStableTag.CommitSHA)
+	}
+
 	if tag == "master" {
-		return false, IsMaster, nil
+		return false, IsMaster, updatedRef, nil
 	}
 
 	// first check out cache, see if we know anything about this combination
 	isCached, cachedIsStable, cachedUnstableReason, err := isGitHubRefStableInCache(owner, repo, tag)
 	if err != nil {
-		return false, UnknownReason, errors.Wrap(err, "failed to check cache")
+		return false, UnknownReason, "", errors.Wrap(err, "failed to check cache")
 	}
 
 	if isCached {
-		return cachedIsStable, cachedUnstableReason, nil
-	}
-
-	// Let's figure out what type of ref this is
-	possiblyStableTag, maybeBranch, isCommit, err := determineGitHubRefType(callingRepoID, owner, repo, tag)
-	if err != nil {
-		return false, UnknownReason, errors.Wrap(err, "failed to get ref type")
+		return cachedIsStable, cachedUnstableReason, updatedRef, nil
 	}
 
 	isStable := false
@@ -155,11 +163,11 @@ func isGitHubRefStable(callingRepoID int64, ref string) (bool, UnstableReason, e
 		unstableReason = IsStable
 	} else if possiblyStableTag != nil {
 		if err := cacheGitHubTagHistory(owner, repo, tag, possiblyStableTag.CommitSHA); err != nil {
-			return false, UnknownReason, errors.Wrap(err, "failed to cache tag history")
+			return false, UnknownReason, updatedRef, errors.Wrap(err, "failed to cache tag history")
 		}
 		hasUnstableHistory, err := doesTagHaveUnstableHistory(owner, repo, tag)
 		if err != nil {
-			return false, UnknownReason, errors.Wrap(err, "failed to check if tag has unstable history")
+			return false, UnknownReason, updatedRef, errors.Wrap(err, "failed to check if tag has unstable history")
 		}
 
 		if hasUnstableHistory {
@@ -187,15 +195,7 @@ func isGitHubRefStable(callingRepoID int64, ref string) (bool, UnstableReason, e
 		fmt.Printf("err")
 	}
 
-	return isStable, unstableReason, nil
-}
-
-func cacheGitHubTagHistory(owner string, repo string, tag string, sha string) error {
-	return nil
-}
-
-func doesTagHaveUnstableHistory(owner string, repo string, tag string) (bool, error) {
-	return false, nil
+	return isStable, unstableReason, updatedRef, nil
 }
 
 func determineGitHubRefType(callingRepoID int64, owner string, repo string, tag string) (*PossiblyStableTag, *Branch, bool, error) {
@@ -245,12 +245,4 @@ func determineGitHubRefType(callingRepoID int64, owner string, repo string, tag 
 	}
 
 	return nil, nil, false, nil
-}
-
-func isGitHubRefStableInCache(owner string, repo string, tag string) (bool, bool, UnstableReason, error) {
-	return false, false, UnknownReason, nil
-}
-
-func cacheGitHubRefStable(owner string, repo string, tag string, isStable bool, unstableReason UnstableReason, cacheDuration time.Duration) error {
-	return nil
 }

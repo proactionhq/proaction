@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
-	"github.com/proactionhq/proaction/pkg/proaction"
+	"github.com/proactionhq/proaction/internal/event"
 	"github.com/proactionhq/proaction/pkg/scanner"
 	"github.com/proactionhq/proaction/pkg/workflow"
 	"github.com/spf13/cobra"
@@ -24,7 +24,9 @@ func ScanCmd() *cobra.Command {
 			viper.BindPFlags(cmd.Flags())
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := proaction.Init(viper.GetViper()); err != nil {
+			v := viper.GetViper()
+
+			if err := event.Init(v); err != nil {
 				fmt.Printf("%s\n", err.Error())
 			}
 
@@ -40,6 +42,14 @@ func ScanCmd() *cobra.Command {
 
 			s := scanner.NewScanner()
 			s.OriginalContent = string(content)
+
+			if len(v.GetStringSlice("check")) == 0 {
+				s.EnableAllChecks()
+			} else {
+				for _, check := range v.GetStringSlice("check") {
+					s.EnabledChecks = append(s.EnabledChecks, check)
+				}
+			}
 
 			err = s.ScanWorkflow(workflow)
 			if err != nil {
@@ -59,6 +69,7 @@ func ScanCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringSlice("check", []string{}, "check(s) to run. if empty, all checks will run")
 	cmd.Flags().Bool("dry-run", false, "when set, proaction will print the output and recommended changes, but will not make changes to the file")
 	cmd.Flags().Bool("quiet", false, "when set, proaction will not print explanations but will only update the workflow files with recommendations")
 

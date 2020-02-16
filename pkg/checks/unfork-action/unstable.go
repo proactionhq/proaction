@@ -1,4 +1,4 @@
-package unstablegithubref
+package unforkaction
 
 import (
 	"github.com/pkg/errors"
@@ -7,18 +7,18 @@ import (
 )
 
 var (
-	CheckName = "unstable-github-ref"
+	CheckName = "unfork-action"
 )
 
 func Run(originalWorkflowContent string, parsedWorkflow *workflow.ParsedWorkflow) (string, []*issue.Issue, error) {
-	issues, err := executeUnstableRefCheckForWorkflow(parsedWorkflow)
+	issues, err := executeUnforkActionCheckForWorkflow(parsedWorkflow)
 	if err != nil {
-		return "", nil, errors.Wrap(err, "failed to execute unstable ref check")
+		return "", nil, errors.Wrap(err, "failed to execute unfork action check")
 	}
 
 	lastRemediateWorkflowContent := originalWorkflowContent
 	for _, i := range issues {
-		afterWorkflow, err := remediateWorkflow(lastRemediateWorkflowContent, i)
+		afterWorkflow, err := remediateWorkflow(parsedWorkflow, lastRemediateWorkflowContent, i)
 		if err != nil {
 			return "", nil, errors.Wrap(err, "failed to remediate workflow")
 		}

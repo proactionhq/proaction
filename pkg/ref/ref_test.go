@@ -1,4 +1,4 @@
-package unstablegithubref
+package ref
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_refToParts(t *testing.T) {
+func Test_RefToParts(t *testing.T) {
 	tests := []struct {
 		ref           string
 		expectedOwner string
@@ -35,7 +35,7 @@ func Test_refToParts(t *testing.T) {
 		t.Run(test.ref, func(t *testing.T) {
 			req := require.New(t)
 
-			actualOwner, actualRepo, actualPath, actualRef, err := refToParts(test.ref)
+			actualOwner, actualRepo, actualPath, actualRef, err := RefToParts(test.ref)
 			req.NoError(err)
 
 			assert.Equal(t, test.expectedOwner, actualOwner)
