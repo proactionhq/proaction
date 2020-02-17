@@ -35,3 +35,18 @@ archives:
       - LICENSE*
       - readme*
       - README*
+brews:
+  name: proaction
+  ids:
+    - proaction
+  github:
+    owner: proactionhq
+    name: homebrew-tap
+  commit_author:
+    name: proactionbot
+    email: bots@proaction.io
+  folder: Formula
+  homepage: "https://proaction.io"
+  description: "Build better GitHub Action Workflows"
+  skip_upload: false
+  
