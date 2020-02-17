@@ -10,8 +10,15 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: "kustomize build migrations"
+    - name: "from an unmerged fork"
       uses: marccampbell/kustomize-github-action@set-image
+      with:
+        kustomize_version: "2.0.3"
+        kustomize_build_dir: "migrations/kustomize/overlays/staging"
+        kustomize_output_file: "gitops-deploy/staging/schema.yaml"
+
+    - name: "from a merged fork"
+      uses: marccampbell/kustomize-github-action@output-file
       with:
         kustomize_version: "2.0.3"
         kustomize_build_dir: "migrations/kustomize/overlays/staging"

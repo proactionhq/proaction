@@ -16,5 +16,9 @@ This is a tagged action, and will not trigger any recommendations.
 
 ### `marccampbell/kustomize-github-action@set-image`
 
+This action references a [fork](https://github.com/marccampbell/kustomize-github-action) of the [kustomize](https://github.com/karancode/kustomize-github-action) action. The fork was used and the parent repository was not updated with the contents from this forked branch. The workflow should retain the fork when run, because the code is not available on the parent.
+
+### `marccampbell/kustomize-github-action@putput-file`
+
 This action references a [fork](https://github.com/marccampbell/kustomize-github-action) of the [kustomize](https://github.com/karancode/kustomize-github-action) action. The fork was created because the action did not support a specific workflow. The fork was used, but a PR was made to the upstream action, and [was accepted and merged](https://github.com/karancode/kustomize-github-action/pull/10). At this point, the workflow should go back to the upstream action, and no longer depend on an outdated fork.
 

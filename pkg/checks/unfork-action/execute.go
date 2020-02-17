@@ -34,9 +34,42 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow
 				continue
 			}
 
+			forkOwner, forkRepo, path, githubRef, err := ref.RefToParts(step.Uses)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse ref")
+			}
+
+			possiblyStableTag, branch, isCommit, err := ref.DetermineGitHubRefType(forkOwner, forkRepo, githubRef)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to get sha from ref")
+			}
+
+			commitSHA := ""
+			if possiblyStableTag != nil {
+				commitSHA = possiblyStableTag.CommitSHA
+			} else if branch != nil {
+				commitSHA = branch.CommitSHA
+			} else if isCommit {
+				commitSHA = githubRef
+			}
+
+			isSHAInRepo, err := ref.IsSHAInRepo(upstreamOwner, upstreamRepo, commitSHA)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to check if sha is in repo")
+			}
+
+			if !isSHAInRepo {
+				continue
+			}
+
 			message := mustGetIssueMessage(parsedWorkflow.Name, jobName, step)
 
-			unforkedRef := fmt.Sprintf("%s/%s", upstreamOwner, upstreamRepo)
+			unforkedRef := ""
+			if path == "" {
+				unforkedRef = fmt.Sprintf("%s/%s@%s", upstreamOwner, upstreamRepo, commitSHA[0:7])
+			} else {
+				unforkedRef = fmt.Sprintf("%s/%s/%s@%s", upstreamOwner, upstreamRepo, path, commitSHA[0:7])
+			}
 
 			i := issue.Issue{
 				CheckType: CheckName,

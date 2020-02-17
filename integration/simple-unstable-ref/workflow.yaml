@@ -1,0 +1,13 @@
+name: ""
+on:
+  - pull_request
+
+jobs:
+  terraform:
+    name: "simple"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "simplejs"
+        uses: proactionhq/proaction-test-actions@master

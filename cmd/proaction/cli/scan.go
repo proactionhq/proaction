@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/internal/event"
 	"github.com/proactionhq/proaction/pkg/scanner"
-	"github.com/proactionhq/proaction/pkg/workflow"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,11 +38,6 @@ func ScanCmd() *cobra.Command {
 				return errors.Wrap(err, "failed to read workflow")
 			}
 
-			workflow, err := workflow.Parse(content)
-			if err != nil {
-				return errors.Wrap(err, "failed to parse workflow")
-			}
-
 			s := scanner.NewScanner()
 			s.OriginalContent = string(content)
 
@@ -54,7 +49,7 @@ func ScanCmd() *cobra.Command {
 				}
 			}
 
-			err = s.ScanWorkflow(workflow)
+			err = s.ScanWorkflow()
 			if err != nil {
 				return errors.Wrap(err, "failed to scan workflow")
 			}
@@ -64,12 +59,26 @@ func ScanCmd() *cobra.Command {
 				os.Exit(0)
 			}
 
-			fmt.Printf("%#v", s.GetOutput())
+			if !v.GetBool("quiet") {
+				fmt.Printf("%#v", s.GetOutput())
+			}
 
 			if s.OriginalContent != s.RemediatedContent {
-				err := ioutil.WriteFile(args[0], []byte(s.RemediatedContent), 0755)
-				if err != nil {
-					return errors.Wrap(err, "failed to update workflow with remediations")
+				if v.GetString("out") == "" {
+					err := ioutil.WriteFile(args[0], []byte(s.RemediatedContent), 0755)
+					if err != nil {
+						return errors.Wrap(err, "failed to update workflow with remediations")
+					}
+				} else {
+					d, _ := filepath.Split(v.GetString("out"))
+					if err := os.MkdirAll(d, 0755); err != nil {
+						return errors.Wrap(err, "failed to mkdir for out file")
+					}
+
+					err := ioutil.WriteFile(v.GetString("out"), []byte(s.RemediatedContent), 0755)
+					if err != nil {
+						return errors.Wrap(err, "failed to update workflow with remediations")
+					}
 				}
 
 			}
@@ -80,6 +89,7 @@ func ScanCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringSlice("check", []string{}, "check(s) to run. if empty, all checks will run")
+	cmd.Flags().String("out", "", "when set, the updated workflow will be written to the file specified, instead of in place")
 	cmd.Flags().Bool("dry-run", false, "when set, proaction will print the output and recommended changes, but will not make changes to the file")
 	cmd.Flags().Bool("quiet", false, "when set, proaction will not print explanations but will only update the workflow files with recommendations")
 	cmd.Flags().Bool("debug", false, "when set, echo debug statements")
