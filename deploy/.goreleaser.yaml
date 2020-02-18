@@ -36,17 +36,32 @@ archives:
       - readme*
       - README*
 brews:
-  name: proaction
-  ids:
-    - proaction
-  github:
-    owner: proactionhq
-    name: homebrew-tap
-  commit_author:
-    name: proactionbot
-    email: bots@proaction.io
-  folder: Formula
-  homepage: "https://proaction.io"
-  description: "Build better GitHub Action Workflows"
-  skip_upload: false
-  
+  - name: proaction
+    ids:
+      - proaction
+    github:
+      owner: proactionhq
+      name: homebrew-tap
+    commit_author:
+      name: proactionbot
+      email: bots@proaction.io
+    folder: Formula
+    homepage: "https://proaction.io"
+    description: "Build better GitHub Action Workflows"
+    skip_upload: false
+    
+## need snapcrap installed before we can do this
+# snapcrafts:
+#   - id: proaction
+#     builds:
+#       - proaction
+#     name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}"
+#     name: proaction
+#     publish: true
+#     summary: "Build better GitHub Action Workflows"
+#     description: |
+#       Proaction is a CLI that improves your GitHub Action workflows by
+#       suggesting changes that will improve reliability and create more 
+#       reproducible workflow executions.
+#     confinement: classic
+#     license: Apache2
