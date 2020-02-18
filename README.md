@@ -6,10 +6,10 @@ The goal of Proaction is to encourage creating workflows that secure, reliable, 
 
 ## Current Proaction Checks
 
-[x] [Unstable GitHub Ref](https://docs.proaction.io/proactions/unstable-github-ref/description/)
-[x] [Unstable Docker Tag](https://docs.proaction.io/proactions/unstable-docker-tag/description/)
-[x] [Outdated Action](https://docs.proaction.io/proactions/outdated-action/description/)
-[x] [Unfork Action](https://docs.proaction.io/proactions/unfork-action/description/)
+- [x] [Unstable GitHub Ref](https://docs.proaction.io/proactions/unstable-github-ref/description/)
+- [x] [Unstable Docker Tag](https://docs.proaction.io/proactions/unstable-docker-tag/description/)
+- [x] [Outdated Action](https://docs.proaction.io/proactions/outdated-action/description/)
+- [x] [Unfork Action](https://docs.proaction.io/proactions/unfork-action/description/)
 
 ## Best Practices
 
