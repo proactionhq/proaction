@@ -83,7 +83,7 @@ func IsLatestRelease() (bool, string, error) {
 }
 
 func isLatestRelease(client *http.Client, upstream string) (bool, string, error) {
-	resp, err := client.Get(upstream + "/install?version")
+	resp, err := client.Get(upstream)
 	if err != nil {
 		return false, "", errors.Wrapf(err, "find latest release")
 	}

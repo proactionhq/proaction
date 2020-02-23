@@ -19,7 +19,7 @@ func VersionCmd() *cobra.Command {
 			if err != nil {
 				fmt.Printf("\nUnable to check for newer releases: %s\n", err.Error())
 			} else if !isLatest {
-				fmt.Printf("\nVersion %s is available for proaction. To install updates, run\n  $ curl https://proaction.io/install | bash\n", latestVer)
+				fmt.Printf("\nVersion %s of Proaction is available.\n\nTo install the latest version, please visit https://proaction.io/docs/getting-started/installing/\n\n", latestVer)
 			}
 
 			return nil
