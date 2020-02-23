@@ -100,26 +100,34 @@ func ScanCmd() *cobra.Command {
 					diffs := dmp.DiffMain(charsA, charsB, false)
 					diffs = dmp.DiffCharsToLines(diffs, lines)
 					fmt.Println(dmp.DiffPrettyText(dmp.DiffCleanupEfficiency(diffs)))
-				} else if v.GetString("out") == "" {
-					err := ioutil.WriteFile(localFile, []byte(s.RemediatedContent), 0755)
-					if err != nil {
-						return errors.Wrap(err, "failed to update workflow with remediations")
-					}
 				} else {
-					d, _ := filepath.Split(v.GetString("out"))
-					if err := os.MkdirAll(d, 0755); err != nil {
-						return errors.Wrap(err, "failed to mkdir for out file")
+					if v.GetBool("dry-run") {
+						fmt.Printf("%s\n", s.RemediatedContent)
+						return nil
 					}
 
-					err := ioutil.WriteFile(v.GetString("out"), []byte(s.RemediatedContent), 0755)
-					if err != nil {
-						return errors.Wrap(err, "failed to update workflow with remediations")
+					if v.GetString("out") == "" {
+						err := ioutil.WriteFile(localFile, []byte(s.RemediatedContent), 0755)
+						if err != nil {
+							return errors.Wrap(err, "failed to update workflow with remediations")
+						}
+					} else {
+						d, _ := filepath.Split(v.GetString("out"))
+						if err := os.MkdirAll(d, 0755); err != nil {
+							return errors.Wrap(err, "failed to mkdir for out file")
+						}
+
+						err := ioutil.WriteFile(v.GetString("out"), []byte(s.RemediatedContent), 0755)
+						if err != nil {
+							return errors.Wrap(err, "failed to update workflow with remediations")
+						}
 					}
 				}
 
+				// exit with a non-zero code because there are changes
+				os.Exit(2)
 			}
 
-			os.Exit(1)
 			return nil
 		},
 	}
