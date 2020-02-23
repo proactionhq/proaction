@@ -96,7 +96,9 @@ func ScanCmd() *cobra.Command {
 			if s.OriginalContent != s.RemediatedContent {
 				if v.GetBool("show-diff") {
 					dmp := diffmatchpatch.New()
-					diffs := dmp.DiffMain(s.OriginalContent, s.RemediatedContent, false)
+					charsA, charsB, lines := dmp.DiffLinesToChars(s.OriginalContent, s.RemediatedContent)
+					diffs := dmp.DiffMain(charsA, charsB, false)
+					diffs = dmp.DiffCharsToLines(diffs, lines)
 					fmt.Println(dmp.DiffPrettyText(dmp.DiffCleanupEfficiency(diffs)))
 				} else if v.GetString("out") == "" {
 					err := ioutil.WriteFile(localFile, []byte(s.RemediatedContent), 0755)

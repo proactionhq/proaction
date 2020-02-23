@@ -131,6 +131,12 @@ func isGitHubRefStable(githubRef string) (bool, UnstableReason, string, error) {
 	}
 
 	if tag == "master" {
+		// Some special cases that are hard coded
+		if owner == "actions" {
+			if repo == "checkout" {
+				return false, IsMaster, "actions/checkout@v2", nil
+			}
+		}
 		return false, IsMaster, updatedRef, nil
 	}
 

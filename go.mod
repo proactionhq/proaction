@@ -16,5 +16,7 @@ require (
 	go.uber.org/zap v1.10.0
 	go.undefinedlabs.com/scopeagent v0.1.11
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
+	golang.org/x/tools v0.0.0-20190524140312-2c0ae7006135 // indirect
 	gopkg.in/yaml.v2 v2.2.4
+	honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc // indirect
 )
