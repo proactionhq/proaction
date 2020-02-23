@@ -35,7 +35,7 @@ Workflows should be written to be easy to maintain, minimizing the work needed t
 
 ### Install Proaction
 
-...
+To install Proaction, download the latest release from the [Releases](https://github.com/proactionhq/proaction/releases) page or visit the [docs](https://proaction.io/docs/getting-started/installing/) for other options.
 
 ### Running With A Workflow File
 
