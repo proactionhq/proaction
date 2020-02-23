@@ -45,6 +45,7 @@ func Init(v *viper.Viper) error {
 	}
 
 	req.Header.Set("Authorization", machineID)
+	req.Header.Set("User-Agent", userAgent)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
