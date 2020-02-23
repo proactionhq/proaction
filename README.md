@@ -1,6 +1,6 @@
 # Proaction
 
-Proaction is a CLI that recommends and updates GitHub Action Workflows in order to make them more reliable. Certain patterns in Workflows can result in flakey and unreliable output, or can create dependencies that break when external Actions are updated.
+[Proaction](https://proaction.io) is a CLI that recommends and updates GitHub Action Workflows in order to make them more reliable. Certain patterns in Workflows can result in flakey and unreliable output, or can create dependencies that break when external Actions are updated.
 
 The goal of Proaction is to encourage creating workflows that secure, reliable, and will not change unexpectedly.
 
@@ -45,7 +45,7 @@ $ proaction scan ./path/to/.github/workflows/workflow.yaml
 
 ## Read More
 
-To read more, visit the [documentation](https://docs.proaction.io). The docs list all of the Proaction checks that are performed and explain the reasons for each. 
+To read more, visit the [documentation](https://docs.proaction.io). The docs list all of the Proaction checks that are performed and explain the reasons for each.
 
 ### GitHub API and Rate Limits
 
