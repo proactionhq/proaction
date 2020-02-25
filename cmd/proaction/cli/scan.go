@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 
+	cursor "github.com/ahmetalpbalkan/go-cursor"
 	"github.com/google/go-github/v28/github"
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/internal/event"
@@ -17,6 +19,7 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tj/go-spin"
 )
 
 var (
@@ -79,11 +82,40 @@ func ScanCmd() *cobra.Command {
 				}
 			}
 
+			// Set up a spinner
+			fmt.Print(cursor.Hide())
+			stopChan := make(chan bool)
+			stoppedChan := make(chan bool)
+			spinner := spin.New()
+			fmt.Printf(" %s Scanning workflow file", spinner.Next())
+			go func() {
+				for {
+					select {
+					case <-stopChan:
+						fmt.Printf("\r")
+						fmt.Printf(" Scan complete                   \n")
+						fmt.Print(cursor.Show())
+						stoppedChan <- true
+						return
+					case <-time.After(time.Millisecond * 100):
+						fmt.Printf("\r")
+						fmt.Printf(" %s Scanning workflow file", spinner.Next())
+					}
+				}
+			}()
+
 			err = s.ScanWorkflow()
 			if err != nil {
 				return errors.Wrap(err, "failed to scan workflow")
 			}
+			stopChan <- true
 
+			select {
+			case <-stoppedChan:
+				break
+			case <-time.After(time.Millisecond * 100):
+				break
+			}
 			if len(s.Issues) == 0 {
 				fmt.Println("No recommendations found!")
 				os.Exit(0)
