@@ -29,7 +29,7 @@ var (
 func ScanCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:           "scan",
-		Short:         "r",
+		Short:         "Check for issues in the given workflow",
 		Long:          ``,
 		SilenceUsage:  true,
 		SilenceErrors: false,
