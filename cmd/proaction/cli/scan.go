@@ -59,7 +59,7 @@ func ScanCmd() *cobra.Command {
 
 					localFile = downloadedFile
 
-					v.Set("show-diff", true)
+					v.Set("diff", true)
 				}
 			}
 
@@ -94,7 +94,7 @@ func ScanCmd() *cobra.Command {
 			}
 
 			if s.OriginalContent != s.RemediatedContent {
-				if v.GetBool("show-diff") {
+				if v.GetBool("diff") {
 					dmp := diffmatchpatch.New()
 					charsA, charsB, lines := dmp.DiffLinesToChars(s.OriginalContent, s.RemediatedContent)
 					diffs := dmp.DiffMain(charsA, charsB, false)
@@ -137,7 +137,7 @@ func ScanCmd() *cobra.Command {
 	cmd.Flags().Bool("dry-run", false, "when set, proaction will print the output and recommended changes, but will not make changes to the file")
 	cmd.Flags().Bool("quiet", false, "when set, proaction will not print explanations but will only update the workflow files with recommendations")
 	cmd.Flags().Bool("debug", false, "when set, echo debug statements")
-	cmd.Flags().Bool("show-diff", false, "when set, instead of writing the file, just show a diff")
+	cmd.Flags().Bool("diff", false, "when set, instead of writing the file, just show a diff")
 
 	return cmd
 }
