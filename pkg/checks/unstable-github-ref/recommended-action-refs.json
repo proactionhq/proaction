@@ -1,8 +1,15 @@
 {
   "actions/checkout": {
-    "tags": [
+    "recommendedRefType": "tag",
+    "recommendedRefs": [
       "v2",
       "v1"
+    ]
+  },
+  "snyk/actions/node": {
+    "recommendedRefType": "tag",
+    "recommendedRefs": [
+      "0.1.1"
     ]
   }
 }
