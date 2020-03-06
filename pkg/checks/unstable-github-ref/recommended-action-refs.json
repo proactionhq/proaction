@@ -1,0 +1,8 @@
+{
+  "actions/checkout": {
+    "tags": [
+      "v2",
+      "v1"
+    ]
+  }
+}
