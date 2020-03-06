@@ -122,7 +122,7 @@ func ScanCmd() *cobra.Command {
 			}
 
 			if !v.GetBool("quiet") {
-				fmt.Printf("%#v", s.GetOutput())
+				fmt.Printf("%s\n", s.GetOutput())
 			}
 
 			if s.OriginalContent != s.RemediatedContent {
