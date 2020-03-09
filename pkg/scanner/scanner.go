@@ -109,7 +109,7 @@ func (s Scanner) getContent() string {
 func (s Scanner) GetOutput() string {
 	output := ""
 	for _, i := range s.Issues {
-		output = fmt.Sprintf("%s--->%s\n", output, i.Message)
+		output = fmt.Sprintf("%s* %s\n", output, i.Message)
 	}
 
 	return output

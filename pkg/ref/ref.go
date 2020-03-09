@@ -123,3 +123,28 @@ func IsSHAInRepo(owner string, repo string, commitSHA string) (bool, error) {
 
 	return false, nil
 }
+
+func ListTagsInRepo(owner string, repo string) ([]string, error) {
+	githubClient := githubapi.NewGitHubClient()
+
+	opts := github.ListOptions{}
+	listTagsResponse, _, err := githubClient.Repositories.ListTags(context.Background(), owner, repo, &opts)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to list tags for repo")
+	}
+
+	tags := []string{}
+	for _, tag := range listTagsResponse {
+		tags = append(tags, tag.GetName())
+	}
+
+	return tags, nil
+}
+
+func CreateRefString(owner string, repo string, path string, ref string) string {
+	if path == "" {
+		return fmt.Sprintf("%s/%s@%s", owner, repo, ref)
+	}
+
+	return fmt.Sprintf("%s/%s/%s@%s", owner, repo, path, ref)
+}
