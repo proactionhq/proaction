@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -61,6 +62,31 @@ func ScanCmd() *cobra.Command {
 					defer os.RemoveAll(downloadedFile)
 
 					localFile = downloadedFile
+
+					v.Set("diff", true)
+				} else if parsedURL.Hostname() == "raw.githubusercontent.com" {
+					resp, err := http.DefaultClient.Get(parsedURL.String())
+					if err != nil {
+						return errors.Wrap(err, "failed to download raw github file")
+					}
+					defer resp.Body.Close()
+
+					body, err := ioutil.ReadAll(resp.Body)
+					if err != nil {
+						return errors.Wrap(err, "failed to read response body")
+					}
+
+					tmpFile, err := ioutil.TempFile("", "proaction")
+					if err != nil {
+						return errors.Wrap(err, "failed to create temp file")
+					}
+					defer os.RemoveAll(tmpFile.Name())
+
+					if err := ioutil.WriteFile(tmpFile.Name(), []byte(body), 0755); err != nil {
+						return errors.Wrap(err, "failed to save to temp file")
+					}
+
+					localFile = tmpFile.Name()
 
 					v.Set("diff", true)
 				}
