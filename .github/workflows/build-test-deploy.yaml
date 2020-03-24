@@ -63,6 +63,8 @@ jobs:
         with:
           go-version: "1.13.8"
 
+      - run: sudo apt-get -qq -y install 
+      
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1
         with:
