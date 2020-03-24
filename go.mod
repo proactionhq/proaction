@@ -7,6 +7,7 @@ require (
 	github.com/ahmetalpbalkan/go-cursor v0.0.0-20131010032410-8136607ea412
 	github.com/bradleyfalzon/ghinstallation v1.1.1 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v28 v28.1.1
 	github.com/pkg/errors v0.8.0
@@ -19,4 +20,5 @@ require (
 	go.undefinedlabs.com/scopeagent v0.1.11
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 )
