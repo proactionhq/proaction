@@ -50,22 +50,22 @@ func Test_Trigger_UnmarshalYAML(t *testing.T) {
 				Create: &EventWithoutTypes{},
 			},
 		},
-		// 		{
-		// 			name: "schedule",
-		// 			input: `schedule:
-		//   - cron: "0 */4 * * *"`,
-		// 			wantType:            MultiEventType,
-		// 			wantStringOrListVal: nil,
-		// 			wantMultiEventVal: &MultiEvent{
-		// 				Schedule: &ScheduleEvent{
-		// 					Crons: []Cron{
-		// 						Cron{
-		// 							CronField: "0 */4 * * *",
-		// 						},
-		// 					},
-		// 				},
-		// 			},
-		// 		},
+		{
+			name: "schedule",
+			input: `schedule:
+  - cron: "0 */4 * * *"`,
+			wantType:            MultiEventType,
+			wantStringOrListVal: nil,
+			wantMultiEventVal: &MultiEvent{
+				Schedule: &ScheduleEvent{
+					Crons: []Cron{
+						Cron{
+							CronField: "0 */4 * * *",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

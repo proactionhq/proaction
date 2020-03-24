@@ -98,21 +98,22 @@ func (t *Trigger) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (me *MultiEvent) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	objects := make(map[string][]byte)
+	objects := make(map[string]interface{})
 	err := unmarshal(&objects)
 	if err != nil {
 		return errors.Wrap(err, "failed to unmarshal multievent")
 	}
 
-	for key, val := range objects {
+	for key, rawVal := range objects {
 		eventWithoutTypes := EventWithoutTypes{}
-		yaml.Unmarshal(val, &eventWithoutTypes)
 
 		eventWithTypes := EventWithTypes{}
-		yaml.Unmarshal(val, &eventWithTypes)
-
 		pushPullEvent := PushPullEvent{}
-		yaml.Unmarshal(val, &pushPullEvent)
+
+		if _, ok := rawVal.([]byte); ok {
+			yaml.Unmarshal(rawVal.([]byte), &eventWithTypes)
+			yaml.Unmarshal(rawVal.([]byte), &pushPullEvent)
+		}
 
 		switch key {
 		case "check_run":
@@ -191,10 +192,12 @@ func (me *MultiEvent) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			me.Watch = &eventWithTypes
 			break
 		case "schedule":
-			fmt.Printf("Val = %#v\n", val)
 			scheduleEvent := ScheduleEvent{}
-			if err := yaml.Unmarshal(val, &scheduleEvent); err != nil {
-				return errors.Wrap(err, "failed to unmarshal schedule event")
+			for _, v := range rawVal.([]interface{}) {
+				vv := v.(map[interface{}]interface{})
+				if vvv, ok := vv["cron"]; ok {
+					scheduleEvent.Crons = append(scheduleEvent.Crons, Cron{CronField: vvv.(string)})
+				}
 			}
 			me.Schedule = &scheduleEvent
 			break
