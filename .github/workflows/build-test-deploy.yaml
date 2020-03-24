@@ -46,6 +46,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - run: make integration
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   goreleaser:
     runs-on: ubuntu-latest
