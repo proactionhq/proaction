@@ -2,9 +2,9 @@ package unstabledockertag
 
 import (
 	"github.com/proactionhq/proaction/pkg/issue"
-	"github.com/proactionhq/proaction/pkg/workflow"
+	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
-func remediateWorkflow(parsedWorkflow *workflow.ParsedWorkflow, beforeWorkflowContent string, i *issue.Issue) (string, error) {
+func remediateWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow, beforeWorkflowContent string, i *issue.Issue) (string, error) {
 	return "", nil
 }

@@ -9,10 +9,10 @@ import (
 	"github.com/proactionhq/proaction/pkg/githubapi"
 	"github.com/proactionhq/proaction/pkg/issue"
 	"github.com/proactionhq/proaction/pkg/ref"
-	"github.com/proactionhq/proaction/pkg/workflow"
+	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
-func executeOutdatedActionCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow) ([]*issue.Issue, error) {
+func executeOutdatedActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
@@ -89,6 +89,6 @@ func executeOutdatedActionCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkfl
 	return issues, nil
 }
 
-func mustGetIssueMessage(workflowName string, jobName string, step workflow.ParsedWorklowStep) string {
+func mustGetIssueMessage(workflowName string, jobName string, step *workflowtypes.Step) string {
 	return fmt.Sprintf("The job named %q in the %q workflow is referencing an outdated commit from %q.", jobName, workflowName, step.Uses)
 }

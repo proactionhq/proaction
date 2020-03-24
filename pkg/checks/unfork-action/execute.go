@@ -9,10 +9,10 @@ import (
 	"github.com/proactionhq/proaction/pkg/githubapi"
 	"github.com/proactionhq/proaction/pkg/issue"
 	"github.com/proactionhq/proaction/pkg/ref"
-	"github.com/proactionhq/proaction/pkg/workflow"
+	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
-func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow) ([]*issue.Issue, error) {
+func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
@@ -89,7 +89,7 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow
 	return issues, nil
 }
 
-func mustGetIssueMessage(workflowName string, jobName string, step workflow.ParsedWorklowStep) string {
+func mustGetIssueMessage(workflowName string, jobName string, step *workflowtypes.Step) string {
 	return ""
 }
 
