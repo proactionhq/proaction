@@ -7,4 +7,8 @@ type Job struct {
 	Env    map[string]interface{} `yaml:"env,omitempty"`
 	If     string                 `yaml:"if,omitempty"`
 	Steps  []*Step                `yaml:"steps,omitempty"`
+
+	// TODO strategy!
+
+	Container *Container `yaml:"container,omitempty"`
 }

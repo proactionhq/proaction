@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/pkg/issue"
-	"github.com/proactionhq/proaction/pkg/workflow"
+	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
 type UnstableReason int
@@ -23,7 +23,7 @@ const (
 	NotRecommendedTag  UnstableReason = iota
 )
 
-func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow) ([]*issue.Issue, error) {
+func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
@@ -67,7 +67,7 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow)
 	return issues, nil
 }
 
-func mustGetIssueMessage(workflowName string, jobName string, unstableReason UnstableReason, step workflow.ParsedWorklowStep) string {
+func mustGetIssueMessage(workflowName string, jobName string, unstableReason UnstableReason, step *workflowtypes.Step) string {
 	switch unstableReason {
 	case IsStable:
 		return ""

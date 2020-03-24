@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/pkg/docker"
 	"github.com/proactionhq/proaction/pkg/issue"
-	"github.com/proactionhq/proaction/pkg/workflow"
+	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
 type UnstableReason int
@@ -18,7 +18,7 @@ const (
 	HasUnstableHistory UnstableReason = iota
 )
 
-func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow) ([]*issue.Issue, error) {
+func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
@@ -61,7 +61,7 @@ func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflow.ParsedWorkflow)
 	return issues, nil
 }
 
-func mustGetIssueMessage(workflowName string, jobName string, unstableReason UnstableReason, step workflow.ParsedWorklowStep) string {
+func mustGetIssueMessage(workflowName string, jobName string, unstableReason UnstableReason, step *workflowtypes.Step) string {
 	switch unstableReason {
 	case IsLatestTag:
 		return fmt.Sprintf("The job named %q in the %q workflow is referencing an action that uses the latest tag of the %q docker image. The latest is likely to change", jobName, workflowName, step.Uses)

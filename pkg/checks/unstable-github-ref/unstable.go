@@ -3,14 +3,14 @@ package unstablegithubref
 import (
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/pkg/issue"
-	"github.com/proactionhq/proaction/pkg/workflow"
+	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
 var (
 	CheckName = "unstable-github-ref"
 )
 
-func Run(originalWorkflowContent string, parsedWorkflow *workflow.ParsedWorkflow) (string, []*issue.Issue, error) {
+func Run(originalWorkflowContent string, parsedWorkflow *workflowtypes.GitHubWorkflow) (string, []*issue.Issue, error) {
 	issues, err := executeUnstableRefCheckForWorkflow(parsedWorkflow)
 	if err != nil {
 		return "", nil, errors.Wrap(err, "failed to execute unstable ref check")

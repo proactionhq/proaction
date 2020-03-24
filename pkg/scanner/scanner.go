@@ -10,7 +10,8 @@ import (
 	unstabledockertag "github.com/proactionhq/proaction/pkg/checks/unstable-docker-tag"
 	unstablegithubref "github.com/proactionhq/proaction/pkg/checks/unstable-github-ref"
 	"github.com/proactionhq/proaction/pkg/issue"
-	"github.com/proactionhq/proaction/pkg/workflow"
+	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
+	"gopkg.in/yaml.v2"
 )
 
 type Scanner struct {
@@ -40,13 +41,13 @@ func (s *Scanner) ScanWorkflow() error {
 	sort.Sort(byPriority(s.EnabledChecks))
 
 	for _, check := range s.EnabledChecks {
-		if check == "unstable-github-ref" {
-			parsedWorkflow, err := workflow.Parse([]byte(s.getContent()))
-			if err != nil {
-				return errors.Wrap(err, "failed to parse workflow")
-			}
+		parsedWorkflow := workflowtypes.GitHubWorkflow{}
+		if err := yaml.Unmarshal([]byte(s.getContent()), &parsedWorkflow); err != nil {
+			return errors.Wrap(err, "failed to parse workflow")
+		}
 
-			updatedContent, issues, err := unstablegithubref.Run(s.getContent(), parsedWorkflow)
+		if check == "unstable-github-ref" {
+			updatedContent, issues, err := unstablegithubref.Run(s.getContent(), &parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-github ref check")
 			}
@@ -54,12 +55,7 @@ func (s *Scanner) ScanWorkflow() error {
 			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "unstable-docker-tag" {
-			parsedWorkflow, err := workflow.Parse([]byte(s.getContent()))
-			if err != nil {
-				return errors.Wrap(err, "failed to parse workflow")
-			}
-
-			updatedContent, issues, err := unstabledockertag.Run(s.getContent(), parsedWorkflow)
+			updatedContent, issues, err := unstabledockertag.Run(s.getContent(), &parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-docker-tag check")
 			}
@@ -67,12 +63,7 @@ func (s *Scanner) ScanWorkflow() error {
 			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "outdated-action" {
-			parsedWorkflow, err := workflow.Parse([]byte(s.getContent()))
-			if err != nil {
-				return errors.Wrap(err, "failed to parse workflow")
-			}
-
-			updatedContent, issues, err := outdatedaction.Run(s.getContent(), parsedWorkflow)
+			updatedContent, issues, err := outdatedaction.Run(s.getContent(), &parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable outdated-action check")
 			}
@@ -80,12 +71,7 @@ func (s *Scanner) ScanWorkflow() error {
 			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "unfork-action" {
-			parsedWorkflow, err := workflow.Parse([]byte(s.getContent()))
-			if err != nil {
-				return errors.Wrap(err, "failed to parse workflow")
-			}
-
-			updatedContent, issues, err := unforkaction.Run(s.getContent(), parsedWorkflow)
+			updatedContent, issues, err := unforkaction.Run(s.getContent(), &parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unfork-action check")
 			}
