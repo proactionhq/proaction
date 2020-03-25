@@ -37,6 +37,11 @@ jobs:
           username: proactionbot
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - run: REPOSITORY=${{ github.repository }} GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} make -C migrations/fixtures deps build schema-fixtures run publish
+      - name: "commit production manifests"
+        run: |
+          git config --global user.email "deploy@proactionhq.io"
+          git config --global user.name "Proaction Bot"
+          cd gitops-deploy/production && git add . && git commit --allow-empty -m "Deploy production from ${GITHUB_REF}"
 
   kots:
     runs-on: ubuntu-latest
@@ -95,6 +100,13 @@ jobs:
 							},
 							&Step{
 								Run: "REPOSITORY=${{ github.repository }} GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} make -C migrations/fixtures deps build schema-fixtures run publish",
+							},
+							&Step{
+								Name: "commit production manifests",
+								Run: `git config --global user.email "deploy@proactionhq.io"
+git config --global user.name "Proaction Bot"
+cd gitops-deploy/production && git add . && git commit --allow-empty -m "Deploy production from ${GITHUB_REF}"
+`,
 							},
 						},
 					},
