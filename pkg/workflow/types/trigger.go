@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -87,7 +85,6 @@ func (t *Trigger) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	err = unmarshal(&multiEventTry)
-	fmt.Printf("%#v\n", multiEventTry)
 	if err == nil {
 		t.Type = MultiEventType
 		t.MultiEventVal = &multiEventTry
