@@ -31,7 +31,8 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "10.x"
-      - uses: azure/docker-login@v1
+      - name: "do something"
+        uses: azure/docker-login@v1
         with:
           username: proactionbot
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -68,6 +69,7 @@ jobs:
 								},
 							},
 							&Step{
+								Name: "do something",
 								Uses: "azure/docker-login@v1",
 								With: &With{
 									Params: map[string]interface{}{
