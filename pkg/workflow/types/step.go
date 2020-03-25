@@ -12,7 +12,7 @@ type Step struct {
 }
 
 type With struct {
-	Params     map[string]interface{} `yaml:"-"`
+	Params     map[string]interface{} `yaml:",inline,omitempty"`
 	Args       string                 `yaml:"args,omitempty"`
 	Entrypoint string                 `yaml:"entrypoint,omitempty"`
 	Env        map[string]interface{} `yaml:"env,omitempty"`

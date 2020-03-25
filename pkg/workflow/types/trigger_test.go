@@ -53,7 +53,8 @@ func Test_Trigger_UnmarshalYAML(t *testing.T) {
 		{
 			name: "schedule",
 			input: `schedule:
-  - cron: "0 */4 * * *"`,
+  - cron: "0 */4 * * *"
+# - cron: "*/5 * * * *"`,
 			wantType:            MultiEventType,
 			wantStringOrListVal: nil,
 			wantMultiEventVal: &MultiEvent{
