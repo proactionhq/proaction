@@ -38,6 +38,21 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - run: REPOSITORY=${{ github.repository }} GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} make -C migrations/fixtures deps build schema-fixtures run publish
 
+  kots:
+    runs-on: ubuntu-latest
+    name: kots
+    needs: [publish-3p, publish-api, publish-web]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+  
+      - name: "kustomize build api kots"
+        uses: marccampbell/kustomize-github-action@set-image
+        with:
+          kustomize_version: "2.0.3"
+          kustomize_build_dir: "api/kustomize/overlays/kots"
+          kustomize_output_file: "kots/api.yaml"
+          kustomize_set_image: "proaction-api=proactionhq/api:${{ github.sha }}"
   `,
 			want: GitHubWorkflow{
 				Name: "Build, test and deploy",
@@ -80,6 +95,39 @@ jobs:
 							},
 							&Step{
 								Run: "REPOSITORY=${{ github.repository }} GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} make -C migrations/fixtures deps build schema-fixtures run publish",
+							},
+						},
+					},
+					"kots": &Job{
+						Name: "kots",
+						RunsOn: &StringOrList{
+							Type:   String,
+							StrVal: &UbuntuLatest,
+						},
+						Needs: &StringOrList{
+							Type: List,
+							ListVal: []string{
+								"publish-3p",
+								"publish-api",
+								"publish-web",
+							},
+						},
+						Steps: []*Step{
+							&Step{
+								Name: "Checkout",
+								Uses: "actions/checkout@v1",
+							},
+							&Step{
+								Name: "kustomize build api kots",
+								Uses: "marccampbell/kustomize-github-action@set-image",
+								With: &With{
+									Params: map[string]interface{}{
+										"kustomize_version":     "2.0.3",
+										"kustomize_build_dir":   "api/kustomize/overlays/kots",
+										"kustomize_output_file": "kots/api.yaml",
+										"kustomize_set_image":   "proaction-api=proactionhq/api:${{ github.sha }}",
+									},
+								},
 							},
 						},
 					},
