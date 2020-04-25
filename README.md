@@ -1,3 +1,5 @@
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/proactionhq/proaction)
+
 # Proaction
 
 [Proaction](https://proaction.io) is a CLI that recommends and updates GitHub Action Workflows in order to make them more reliable. Certain patterns in Workflows can result in flakey and unreliable output, or can create dependencies that break when external Actions are updated.
