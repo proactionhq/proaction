@@ -110,6 +110,10 @@ func ScanCmd() *cobra.Command {
 
 			// Set up a spinner
 			fmt.Print(cursor.Hide())
+			defer func() {
+				fmt.Printf(cursor.Show())
+			}()
+
 			stopChan := make(chan bool)
 			stoppedChan := make(chan bool)
 			spinner := spin.New()
@@ -120,7 +124,6 @@ func ScanCmd() *cobra.Command {
 					case <-stopChan:
 						fmt.Printf("\r")
 						fmt.Printf(" Scan complete                   \n")
-						fmt.Print(cursor.Show())
 						stoppedChan <- true
 						return
 					case <-time.After(time.Millisecond * 100):
