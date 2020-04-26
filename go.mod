@@ -8,6 +8,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation v1.1.1 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/ghodss/yaml v1.0.0
+	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v28 v28.1.1
 	github.com/pkg/errors v0.8.0

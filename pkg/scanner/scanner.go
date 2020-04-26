@@ -14,18 +14,52 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type ScannerStatus int
+
+const (
+	StatusWaiting   ScannerStatus = iota
+	StatusRunning   ScannerStatus = iota
+	StatusCompleted ScannerStatus = iota
+)
+
+type ScannerProgress struct {
+	CheckName string
+	Status    ScannerStatus
+}
+
 type Scanner struct {
 	OriginalContent   string
 	RemediatedContent string
 	Issues            []*issue.Issue
 	EnabledChecks     []string
+	ParsedWorkflow    *workflowtypes.GitHubWorkflow
+	JobNames          []string
+	Progress          map[string][]ScannerProgress
 }
 
-func NewScanner() *Scanner {
-	return &Scanner{
-		Issues:        []*issue.Issue{},
-		EnabledChecks: []string{},
+func NewScanner(content string) (*Scanner, error) {
+	parsedWorkflow := workflowtypes.GitHubWorkflow{}
+	if err := yaml.Unmarshal([]byte(content), &parsedWorkflow); err != nil {
+		return nil, errors.Wrap(err, "failed to parse content")
 	}
+
+	jobNames := []string{}
+	for jobName := range parsedWorkflow.Jobs {
+		jobNames = append(jobNames, jobName)
+	}
+
+	return &Scanner{
+		OriginalContent: content,
+		Issues:          []*issue.Issue{},
+		EnabledChecks:   []string{},
+		ParsedWorkflow:  &parsedWorkflow,
+		JobNames:        jobNames,
+	}, nil
+}
+
+func (s *Scanner) EnableChecks(checks []string) {
+	s.EnabledChecks = checks
+	s.initProgress()
 }
 
 func (s *Scanner) EnableAllChecks() {
@@ -35,6 +69,25 @@ func (s *Scanner) EnableAllChecks() {
 		"unstable-github-ref",
 		"outdated-action",
 	}
+	s.initProgress()
+}
+
+func (s *Scanner) initProgress() {
+	s.Progress = map[string][]ScannerProgress{}
+
+	reset := []ScannerProgress{}
+	for _, check := range s.EnabledChecks {
+		reset = append(reset, ScannerProgress{
+			CheckName: check,
+			Status:    StatusWaiting,
+		})
+	}
+
+	for _, jobName := range s.JobNames {
+		s.Progress[jobName] = reset
+	}
+
+	fmt.Printf("%#v\n", s.Progress)
 }
 
 func (s *Scanner) ScanWorkflow() error {

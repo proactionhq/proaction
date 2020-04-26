@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	cursor "github.com/ahmetalpbalkan/go-cursor"
@@ -20,7 +21,6 @@ import (
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tj/go-spin"
 )
 
 var (
@@ -52,15 +52,15 @@ func ScanCmd() *cobra.Command {
 				return errors.Wrap(err, "failed to read workflow content")
 			}
 
-			s := scanner.NewScanner()
-			s.OriginalContent = string(workflowContent)
+			s, err := scanner.NewScanner(string(workflowContent))
+			if err != nil {
+				return errors.Wrap(err, "failed to create scanner")
+			}
 
 			if len(v.GetStringSlice("check")) == 0 {
 				s.EnableAllChecks()
 			} else {
-				for _, check := range v.GetStringSlice("check") {
-					s.EnabledChecks = append(s.EnabledChecks, check)
-				}
+				s.EnableChecks(v.GetStringSlice("check"))
 			}
 
 			// Set up a spinner
@@ -71,19 +71,41 @@ func ScanCmd() *cobra.Command {
 
 			stopChan := make(chan bool)
 			stoppedChan := make(chan bool)
-			spinner := spin.New()
-			fmt.Printf(" %s Scanning workflow file", spinner.Next())
 			go func() {
+				lineCount := 0
 				for {
 					select {
 					case <-stopChan:
-						fmt.Printf("\r")
-						fmt.Printf(" Scan complete                   \n")
 						stoppedChan <- true
 						return
 					case <-time.After(time.Millisecond * 100):
-						fmt.Printf("\r")
-						fmt.Printf(" %s Scanning workflow file", spinner.Next())
+						for i := 0; i < lineCount; i++ {
+							fmt.Printf("\033[A")
+						}
+
+						maxJobNameLength := 0
+						for _, jobName := range s.JobNames {
+							if len(jobName) > maxJobNameLength {
+								maxJobNameLength = len(jobName)
+							}
+						}
+						for _, jobName := range s.JobNames {
+							for len(jobName) < maxJobNameLength {
+								jobName = jobName + " "
+							}
+
+							fmt.Printf("\r%s ", jobName)
+
+							// show the status of each check
+							for _, status := range s.Progress[strings.TrimSpace(jobName)] {
+								fmt.Printf("%v", status)
+							}
+
+							fmt.Printf("\n")
+						}
+
+						lineCount = len(s.JobNames)
+
 					}
 				}
 			}()
