@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"time"
 
-	cursor "github.com/ahmetalpbalkan/go-cursor"
 	"github.com/google/go-github/v28/github"
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/internal/event"
@@ -63,12 +62,6 @@ func ScanCmd() *cobra.Command {
 				s.EnableChecks(v.GetStringSlice("check"))
 			}
 
-			// Set up a spinner
-			fmt.Print(cursor.Hide())
-			defer func() {
-				fmt.Printf(cursor.Show())
-			}()
-
 			stopChan := make(chan bool)
 			stoppedChan := make(chan bool)
 			go func() {
@@ -83,8 +76,19 @@ func ScanCmd() *cobra.Command {
 							fmt.Printf("\033[A")
 						}
 
+						maxCheckNameLength := 0
+						for _, checkName := range s.EnabledChecks {
+							if len(checkName) > maxCheckNameLength {
+								maxCheckNameLength = len(checkName)
+							}
+						}
+
 						for _, checkName := range s.EnabledChecks {
 							fmt.Printf("\033[2K\r%s ", checkName)
+
+							for i := len(checkName); i < maxCheckNameLength; i++ {
+								fmt.Printf(" ")
+							}
 
 							// show the status of each check
 							progress, ok := s.Progress[checkName]
