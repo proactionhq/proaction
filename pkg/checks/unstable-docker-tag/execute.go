@@ -22,7 +22,7 @@ func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
-		for _, step := range job.Steps {
+		for stepIdx, step := range job.Steps {
 			if step.Uses == "" {
 				continue
 			}
@@ -44,8 +44,9 @@ func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 
 			i := issue.Issue{
 				CheckType: CheckName,
+				JobName:   jobName,
+				StepIdx:   stepIdx,
 				CheckData: map[string]interface{}{
-					"jobName":        jobName,
 					"untableReason":  unstableReason,
 					"originalTag":    "",
 					"redmediatedTag": "",

@@ -27,7 +27,7 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
-		for _, step := range job.Steps {
+		for stepIdx, step := range job.Steps {
 			if step.Uses == "" {
 				continue
 			}
@@ -41,7 +41,6 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check is github ref stable")
 			}
-
 			if isStable {
 				continue
 			}
@@ -50,8 +49,9 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 
 			i := issue.Issue{
 				CheckType: CheckName,
+				JobName:   jobName,
+				StepIdx:   stepIdx,
 				CheckData: map[string]interface{}{
-					"jobName":             jobName,
 					"unstableReason":      unstableReason,
 					"originalGitHubRef":   step.Uses,
 					"remediatedGitHubRef": stableRef,

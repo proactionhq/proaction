@@ -16,7 +16,7 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWor
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
-		for _, step := range job.Steps {
+		for stepIdx, step := range job.Steps {
 			if step.Uses == "" {
 				continue
 			}
@@ -73,8 +73,9 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWor
 
 			i := issue.Issue{
 				CheckType: CheckName,
+				JobName:   jobName,
+				StepIdx:   stepIdx,
 				CheckData: map[string]interface{}{
-					"jobName":             jobName,
 					"originalGitHubRef":   step.Uses,
 					"remediatedGitHubRef": unforkedRef,
 				},

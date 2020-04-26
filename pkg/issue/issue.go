@@ -5,6 +5,8 @@ import "time"
 type Issue struct {
 	ID                    string
 	WorkflowID            int64
+	JobName               string
+	StepIdx               int
 	WorkflowMarshalledSHA []string
 	CreatedAt             time.Time
 	CheckType             string

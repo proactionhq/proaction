@@ -40,46 +40,48 @@ func (s *Scanner) EnableAllChecks() {
 func (s *Scanner) ScanWorkflow() error {
 	sort.Sort(byPriority(s.EnabledChecks))
 
-	for _, check := range s.EnabledChecks {
-		parsedWorkflow := workflowtypes.GitHubWorkflow{}
-		if err := yaml.Unmarshal([]byte(s.getContent()), &parsedWorkflow); err != nil {
-			return errors.Wrap(err, "failed to parse workflow")
-		}
+	parsedWorkflow := workflowtypes.GitHubWorkflow{}
+	if err := yaml.Unmarshal([]byte(s.getContent()), &parsedWorkflow); err != nil {
+		return errors.Wrap(err, "failed to parse workflow")
+	}
 
+	for _, check := range s.EnabledChecks {
 		if check == "unstable-github-ref" {
-			updatedContent, issues, err := unstablegithubref.Run(s.getContent(), &parsedWorkflow)
+			issues, err := unstablegithubref.Run(s.getContent(), &parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-github ref check")
 			}
 
-			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "unstable-docker-tag" {
-			updatedContent, issues, err := unstabledockertag.Run(s.getContent(), &parsedWorkflow)
+			issues, err := unstabledockertag.Run(s.getContent(), &parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-docker-tag check")
 			}
 
-			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "outdated-action" {
-			updatedContent, issues, err := outdatedaction.Run(s.getContent(), &parsedWorkflow)
+			issues, err := outdatedaction.Run(s.getContent(), &parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable outdated-action check")
 			}
 
-			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		} else if check == "unfork-action" {
-			updatedContent, issues, err := unforkaction.Run(s.getContent(), &parsedWorkflow)
+			issues, err := unforkaction.Run(s.getContent(), &parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unfork-action check")
 			}
 
-			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
 		}
 	}
+
+	remediatedWorkflow, err := yaml.Marshal(parsedWorkflow)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal workflow")
+	}
+	s.RemediatedContent = string(remediatedWorkflow)
 
 	return nil
 }

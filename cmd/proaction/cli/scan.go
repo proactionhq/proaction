@@ -47,58 +47,13 @@ func ScanCmd() *cobra.Command {
 				}
 			}
 
-			localFile := args[0]
-
-			// Let's be kind. If someone put in a github.com url, we can probably download
-			// the file, flip a few flags around and print the recommendations to stdout
-			parsedURL, err := url.ParseRequestURI(localFile)
-			if err == nil {
-				// TODO we should support domains that aren't github.com
-				if parsedURL.Hostname() == "github.com" {
-					downloadedFile, err := downloadFileFromGitHub(parsedURL.Path)
-					if err != nil {
-						return errors.Wrap(err, "tried unsuccesfully to download file from github")
-					}
-					defer os.RemoveAll(downloadedFile)
-
-					localFile = downloadedFile
-
-					v.Set("diff", true)
-				} else if parsedURL.Hostname() == "raw.githubusercontent.com" {
-					resp, err := http.DefaultClient.Get(parsedURL.String())
-					if err != nil {
-						return errors.Wrap(err, "failed to download raw github file")
-					}
-					defer resp.Body.Close()
-
-					body, err := ioutil.ReadAll(resp.Body)
-					if err != nil {
-						return errors.Wrap(err, "failed to read response body")
-					}
-
-					tmpFile, err := ioutil.TempFile("", "proaction")
-					if err != nil {
-						return errors.Wrap(err, "failed to create temp file")
-					}
-					defer os.RemoveAll(tmpFile.Name())
-
-					if err := ioutil.WriteFile(tmpFile.Name(), []byte(body), 0755); err != nil {
-						return errors.Wrap(err, "failed to save to temp file")
-					}
-
-					localFile = tmpFile.Name()
-
-					v.Set("diff", true)
-				}
-			}
-
-			content, err := ioutil.ReadFile(localFile)
+			workflowContent, filename, err := readWorkflowContent(args)
 			if err != nil {
-				return errors.Wrap(err, "failed to read workflow")
+				return errors.Wrap(err, "failed to read workflow content")
 			}
 
 			s := scanner.NewScanner()
-			s.OriginalContent = string(content)
+			s.OriginalContent = string(workflowContent)
 
 			if len(v.GetStringSlice("check")) == 0 {
 				s.EnableAllChecks()
@@ -168,7 +123,7 @@ func ScanCmd() *cobra.Command {
 					}
 
 					if v.GetString("out") == "" {
-						err := ioutil.WriteFile(localFile, []byte(s.RemediatedContent), 0755)
+						err := ioutil.WriteFile(filename, []byte(s.RemediatedContent), 0755)
 						if err != nil {
 							return errors.Wrap(err, "failed to update workflow with remediations")
 						}
@@ -201,6 +156,62 @@ func ScanCmd() *cobra.Command {
 	cmd.Flags().Bool("diff", false, "when set, instead of writing the file, just show a diff")
 
 	return cmd
+}
+
+func readWorkflowContent(args []string) ([]byte, string, error) {
+	v := viper.GetViper()
+
+	localFile := args[0]
+
+	// Let's be kind. If someone put in a github.com url, we can probably download
+	// the file, flip a few flags around and print the recommendations to stdout
+	parsedURL, err := url.ParseRequestURI(localFile)
+	if err == nil {
+		// TODO we should support domains that aren't github.com
+		if parsedURL.Hostname() == "github.com" {
+			downloadedFile, err := downloadFileFromGitHub(parsedURL.Path)
+			if err != nil {
+				return nil, "", errors.Wrap(err, "tried unsuccesfully to download file from github")
+			}
+			defer os.RemoveAll(downloadedFile)
+
+			localFile = downloadedFile
+
+			v.Set("diff", true)
+		} else if parsedURL.Hostname() == "raw.githubusercontent.com" {
+			resp, err := http.DefaultClient.Get(parsedURL.String())
+			if err != nil {
+				return nil, "", errors.Wrap(err, "failed to download raw github file")
+			}
+			defer resp.Body.Close()
+
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, "", errors.Wrap(err, "failed to read response body")
+			}
+
+			tmpFile, err := ioutil.TempFile("", "proaction")
+			if err != nil {
+				return nil, "", errors.Wrap(err, "failed to create temp file")
+			}
+			defer os.RemoveAll(tmpFile.Name())
+
+			if err := ioutil.WriteFile(tmpFile.Name(), []byte(body), 0755); err != nil {
+				return nil, "", errors.Wrap(err, "failed to save to temp file")
+			}
+
+			localFile = tmpFile.Name()
+
+			v.Set("diff", true)
+		}
+	}
+
+	content, err := ioutil.ReadFile(localFile)
+	if err != nil {
+		return nil, "", errors.Wrap(err, "failed to read workflow")
+	}
+
+	return content, localFile, nil
 }
 
 func downloadFileFromGitHub(path string) (string, error) {
