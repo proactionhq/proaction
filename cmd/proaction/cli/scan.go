@@ -17,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/internal/event"
 	"github.com/proactionhq/proaction/pkg/githubapi"
+	progresstypes "github.com/proactionhq/proaction/pkg/progress/types"
 	"github.com/proactionhq/proaction/pkg/scanner"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
@@ -97,17 +98,17 @@ func ScanCmd() *cobra.Command {
 							fmt.Printf("\r%s ", checkName)
 
 							// show the status of each check
-							progressFunc, ok := s.Progress[strings.TrimSpace(checkName)]
+							progress, ok := s.Progress[strings.TrimSpace(checkName)]
 							if ok {
-								scannerProgress := progressFunc()
-								for _, s := range scannerProgress.Steps {
-									if status, ok := scannerProgress.StepStatus[s]; ok {
-										if status == scanner.ScannerStatusCompleted {
+								steps, stepStatus := progress.Get()
+								for _, s := range steps {
+									if status, ok := stepStatus[s]; ok {
+										if status == progresstypes.ScannerStatusCompleted {
 											fmt.Printf(" ✓ ")
-										} else if status == scanner.ScannerStatusRunning {
+										} else if status == progresstypes.ScannerStatusRunning {
 											fmt.Printf(" %s ", s)
-										} else if status == scanner.ScannerStatusPending {
-											fmt.Printf(" ⌛ ")
+										} else if status == progresstypes.ScannerStatusPending {
+											fmt.Printf(" . ")
 										}
 									}
 								}

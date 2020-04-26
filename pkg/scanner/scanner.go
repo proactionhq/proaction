@@ -10,24 +10,10 @@ import (
 	unstabledockertag "github.com/proactionhq/proaction/pkg/checks/unstable-docker-tag"
 	unstablegithubref "github.com/proactionhq/proaction/pkg/checks/unstable-github-ref"
 	"github.com/proactionhq/proaction/pkg/issue"
+	progresstypes "github.com/proactionhq/proaction/pkg/progress/types"
 	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 	"gopkg.in/yaml.v3"
 )
-
-type ScannerStatus int
-
-const (
-	ScannerStatusPending   ScannerStatus = iota
-	ScannerStatusRunning   ScannerStatus = iota
-	ScannerStatusCompleted ScannerStatus = iota
-)
-
-type ScannerProgress struct {
-	Steps      []string
-	StepStatus map[string]ScannerStatus
-}
-
-type ScannerFunc func() ScannerProgress
 
 type Scanner struct {
 	OriginalContent   string
@@ -36,7 +22,8 @@ type Scanner struct {
 	EnabledChecks     []string
 	ParsedWorkflow    *workflowtypes.GitHubWorkflow
 	JobNames          []string
-	Progress          map[string]ScannerFunc
+
+	Progress map[string]progresstypes.Progress
 }
 
 func NewScanner(content string) (*Scanner, error) {
@@ -75,29 +62,16 @@ func (s *Scanner) EnableAllChecks() {
 }
 
 func (s *Scanner) initProgress() {
-	s.Progress = map[string]ScannerFunc{}
+	s.Progress = map[string]progresstypes.Progress{}
 
 	for _, enabledCheck := range s.EnabledChecks {
 		if enabledCheck == "unstable-github-ref" {
-			s.Progress[enabledCheck] = s.progressUnstableGitHubRef
+			progress := progresstypes.Progress{}
+			for _, jobName := range s.JobNames {
+				progress.Set(jobName, false, false)
+			}
+			s.Progress[enabledCheck] = progress
 		}
-	}
-}
-
-func (s Scanner) progressUnstableGitHubRef() ScannerProgress {
-	return ScannerProgress{
-		Steps: []string{
-			"a",
-			"b",
-			"c",
-			"d",
-		},
-		StepStatus: map[string]ScannerStatus{
-			"a": ScannerStatusCompleted,
-			"b": ScannerStatusRunning,
-			"c": ScannerStatusPending,
-			"d": ScannerStatusPending,
-		},
 	}
 }
 
@@ -115,7 +89,8 @@ func (s *Scanner) ScanWorkflow() error {
 		}
 
 		if check == "unstable-github-ref" {
-			issues, err := unstablegithubref.DetectIssues(parsedWorkflow)
+			progress := s.Progress[check]
+			issues, err := unstablegithubref.DetectIssues(parsedWorkflow, progress.Set)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-github ref check")
 			}
