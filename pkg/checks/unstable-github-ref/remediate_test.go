@@ -44,7 +44,8 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }`,
 			issue: issue.Issue{
-				CheckType: "unstable-github-ref",
+				CheckType:  "unstable-github-ref",
+				LineNumber: 11,
 				CheckData: map[string]interface{}{
 					"jobName":             "build",
 					"unstableReason":      IsMaster,
@@ -61,7 +62,7 @@ jobs:
 		t.Run(test.name, func(t *testing.T) {
 			req := require.New(t)
 
-			actual, err := remediateWorkflow(test.beforeContent, &test.issue)
+			actual, err := RemediateIssue(test.beforeContent, &test.issue)
 			req.NoError(err)
 
 			assert.Equal(t, test.expectedRemediatedContent, actual)

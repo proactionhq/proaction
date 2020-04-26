@@ -12,20 +12,20 @@ import (
 	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
-func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
+func executeUnforkActionCheckForWorkflow(parsedWorkflow workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
-		for _, step := range job.Steps {
-			if step.Uses == "" {
+		for stepIdx, step := range job.Steps {
+			if step.Uses.Value == "" {
 				continue
 			}
 
-			if strings.HasPrefix(step.Uses, "docker://") {
+			if strings.HasPrefix(step.Uses.Value, "docker://") {
 				continue
 			}
 
-			isFork, upstreamOwner, upstreamRepo, err := isGitHubRefFork(step.Uses)
+			isFork, upstreamOwner, upstreamRepo, err := isGitHubRefFork(step.Uses.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check is github ref fork")
 			}
@@ -34,7 +34,7 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWor
 				continue
 			}
 
-			forkOwner, forkRepo, path, githubRef, err := ref.RefToParts(step.Uses)
+			forkOwner, forkRepo, path, githubRef, err := ref.RefToParts(step.Uses.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse ref")
 			}
@@ -72,10 +72,13 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWor
 			}
 
 			i := issue.Issue{
-				CheckType: CheckName,
+				CheckType:  CheckName,
+				JobName:    jobName,
+				StepIdx:    stepIdx,
+				LineNumber: step.Uses.Line,
+
 				CheckData: map[string]interface{}{
-					"jobName":             jobName,
-					"originalGitHubRef":   step.Uses,
+					"originalGitHubRef":   step.Uses.Value,
 					"remediatedGitHubRef": unforkedRef,
 				},
 				Message:      message,

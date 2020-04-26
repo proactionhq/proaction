@@ -4,13 +4,16 @@ import (
 	"strings"
 
 	"github.com/proactionhq/proaction/pkg/issue"
-	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
-func remediateWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow, beforeWorkflowContent string, i *issue.Issue) (string, error) {
-	// we do a string replace here because... we don't want to lose comments and rework
-	// too much of the yaml
+func RemediateIssue(content string, i *issue.Issue) (string, error) {
+	lines := strings.Split(content, "\n")
 
-	updatedContent := strings.ReplaceAll(beforeWorkflowContent, i.CheckData["originalGitHubRef"].(string), i.CheckData["remediatedGitHubRef"].(string))
-	return updatedContent, nil
+	lines[i.LineNumber-1] = strings.ReplaceAll(
+		lines[i.LineNumber-1],
+		i.CheckData["originalGitHubRef"].(string),
+		i.CheckData["remediatedGitHubRef"].(string),
+	)
+
+	return strings.Join(lines, "\n"), nil
 }

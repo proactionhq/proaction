@@ -11,7 +11,7 @@ import (
 	unstablegithubref "github.com/proactionhq/proaction/pkg/checks/unstable-github-ref"
 	"github.com/proactionhq/proaction/pkg/issue"
 	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type Scanner struct {
@@ -41,47 +41,83 @@ func (s *Scanner) ScanWorkflow() error {
 	sort.Sort(byPriority(s.EnabledChecks))
 
 	for _, check := range s.EnabledChecks {
+		// unmarshal from content each time so that each step can build on the last
+		// this is important because if an issue changes the line count in the workflow
+		// doing this will allow all remediation to still target the correct lines
+
 		parsedWorkflow := workflowtypes.GitHubWorkflow{}
 		if err := yaml.Unmarshal([]byte(s.getContent()), &parsedWorkflow); err != nil {
 			return errors.Wrap(err, "failed to parse workflow")
 		}
 
 		if check == "unstable-github-ref" {
-			updatedContent, issues, err := unstablegithubref.Run(s.getContent(), &parsedWorkflow)
+			issues, err := unstablegithubref.DetectIssues(parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-github ref check")
 			}
 
-			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
+
+			for _, i := range issues {
+				updated, err := unstablegithubref.RemediateIssue(s.getContent(), i)
+				if err != nil {
+					return errors.Wrap(err, "failed to apply remediation")
+				}
+				s.RemediatedContent = updated
+			}
 		} else if check == "unstable-docker-tag" {
-			updatedContent, issues, err := unstabledockertag.Run(s.getContent(), &parsedWorkflow)
+			issues, err := unstabledockertag.DetectIssues(parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unstable-docker-tag check")
 			}
 
-			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
+
+			for _, i := range issues {
+				updated, err := unstabledockertag.RemediateIssue(s.getContent(), i)
+				if err != nil {
+					return errors.Wrap(err, "failed to apply remediation")
+				}
+				s.RemediatedContent = updated
+			}
 		} else if check == "outdated-action" {
-			updatedContent, issues, err := outdatedaction.Run(s.getContent(), &parsedWorkflow)
+			issues, err := outdatedaction.DetectIssues(parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable outdated-action check")
 			}
 
-			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
+
+			for _, i := range issues {
+				updated, err := outdatedaction.RemediateIssue(s.getContent(), i)
+				if err != nil {
+					return errors.Wrap(err, "failed to apply remediation")
+				}
+				s.RemediatedContent = updated
+			}
 		} else if check == "unfork-action" {
-			updatedContent, issues, err := unforkaction.Run(s.getContent(), &parsedWorkflow)
+			issues, err := unforkaction.DetectIssues(parsedWorkflow)
 			if err != nil {
 				return errors.Wrap(err, "failed to run unstable unfork-action check")
 			}
 
-			s.RemediatedContent = updatedContent
 			s.Issues = append(s.Issues, issues...)
+
+			for _, i := range issues {
+				updated, err := unforkaction.RemediateIssue(s.getContent(), i)
+				if err != nil {
+					return errors.Wrap(err, "failed to apply remediation")
+				}
+				s.RemediatedContent = updated
+			}
 		}
 	}
 
 	return nil
+}
+
+func applyRemediation(content string, i issue.Issue) (string, error) {
+	return content, nil
 }
 
 func (s Scanner) getContent() string {

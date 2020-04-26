@@ -18,20 +18,20 @@ const (
 	HasUnstableHistory UnstableReason = iota
 )
 
-func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
+func executeUnstableTagCheckForWorkflow(parsedWorkflow workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
-		for _, step := range job.Steps {
-			if step.Uses == "" {
+		for stepIdx, step := range job.Steps {
+			if step.Uses.Value == "" {
 				continue
 			}
 
-			if !strings.HasPrefix(step.Uses, "docker://") {
+			if !strings.HasPrefix(step.Uses.Value, "docker://") {
 				continue
 			}
 
-			isStable, unstableReason, err := isImageTagStable(step.Uses)
+			isStable, unstableReason, err := isImageTagStable(step.Uses.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check is image name stable")
 			}
@@ -43,10 +43,13 @@ func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 			message := mustGetIssueMessage(parsedWorkflow.Name, jobName, unstableReason, step)
 
 			i := issue.Issue{
-				CheckType: CheckName,
+				CheckType:  CheckName,
+				JobName:    jobName,
+				StepIdx:    stepIdx,
+				LineNumber: step.Uses.Line,
+
 				CheckData: map[string]interface{}{
-					"jobName":        jobName,
-					"untableReason":  unstableReason,
+					"unstableReason": unstableReason,
 					"originalTag":    "",
 					"redmediatedTag": "",
 				},
@@ -64,7 +67,7 @@ func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 func mustGetIssueMessage(workflowName string, jobName string, unstableReason UnstableReason, step *workflowtypes.Step) string {
 	switch unstableReason {
 	case IsLatestTag:
-		return fmt.Sprintf("The job named %q in the %q workflow is referencing an action that uses the latest tag of the %q docker image. The latest is likely to change", jobName, workflowName, step.Uses)
+		return fmt.Sprintf("The job named %q in the %q workflow is referencing an action that uses the latest tag of the %q docker image. The latest is likely to change", jobName, workflowName, step.Uses.Value)
 	case HasUnstableHistory:
 		return "has unstable history"
 	}
