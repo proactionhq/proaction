@@ -16,7 +16,7 @@ func remediateIssue(parsedWorkflow *workflowtypes.GitHubWorkflow, i *issue.Issue
 
 	step := job.Steps[i.StepIdx]
 
-	step.Uses = strings.ReplaceAll(step.Uses, i.CheckData["originalGitHubRef"].(string), i.CheckData["remediatedGitHubRef"].(string))
+	step.Uses.Value = strings.ReplaceAll(step.Uses.Value, i.CheckData["originalGitHubRef"].(string), i.CheckData["remediatedGitHubRef"].(string))
 	job.Steps[i.StepIdx] = step
 
 	return nil

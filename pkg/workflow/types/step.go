@@ -1,14 +1,16 @@
 package types
 
+import "gopkg.in/yaml.v3"
+
 type Step struct {
-	Name            string `yaml:"name,omitempty"`
-	If              string `yaml:"if,omitempty"`
-	Uses            string `yaml:"uses,omitempty"`
-	Run             string `yaml:"run,omitempty"`
-	Shell           string `yaml:"shell,omitempty"`
-	With            *With  `yaml:"with,omitempty"`
-	ContinueOnError *bool  `yaml:"continue-on-error,omitempty"`
-	TimeoutMinutes  int    `yaml:"timeout-minutes,omitempty"`
+	Name            string    `yaml:"name,omitempty"`
+	If              string    `yaml:"if,omitempty"`
+	Uses            yaml.Node `yaml:"uses,omitempty"`
+	Run             string    `yaml:"run,omitempty"`
+	Shell           string    `yaml:"shell,omitempty"`
+	With            *With     `yaml:"with,omitempty"`
+	ContinueOnError *bool     `yaml:"continue-on-error,omitempty"`
+	TimeoutMinutes  int       `yaml:"timeout-minutes,omitempty"`
 }
 
 type With struct {

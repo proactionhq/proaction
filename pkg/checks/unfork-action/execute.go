@@ -17,15 +17,15 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWor
 
 	for jobName, job := range parsedWorkflow.Jobs {
 		for stepIdx, step := range job.Steps {
-			if step.Uses == "" {
+			if step.Uses.Value == "" {
 				continue
 			}
 
-			if strings.HasPrefix(step.Uses, "docker://") {
+			if strings.HasPrefix(step.Uses.Value, "docker://") {
 				continue
 			}
 
-			isFork, upstreamOwner, upstreamRepo, err := isGitHubRefFork(step.Uses)
+			isFork, upstreamOwner, upstreamRepo, err := isGitHubRefFork(step.Uses.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check is github ref fork")
 			}
@@ -34,7 +34,7 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWor
 				continue
 			}
 
-			forkOwner, forkRepo, path, githubRef, err := ref.RefToParts(step.Uses)
+			forkOwner, forkRepo, path, githubRef, err := ref.RefToParts(step.Uses.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse ref")
 			}

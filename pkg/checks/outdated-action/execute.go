@@ -17,16 +17,16 @@ func executeOutdatedActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubW
 
 	for jobName, job := range parsedWorkflow.Jobs {
 		for stepIdx, step := range job.Steps {
-			if step.Uses == "" {
+			if step.Uses.Value == "" {
 				continue
 			}
 
 			// ignore docker uses
-			if strings.HasPrefix(step.Uses, "docker://") {
+			if strings.HasPrefix(step.Uses.Value, "docker://") {
 				continue
 			}
 
-			owner, repo, path, tag, err := ref.RefToParts(step.Uses)
+			owner, repo, path, tag, err := ref.RefToParts(step.Uses.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse ref")
 			}
@@ -91,5 +91,5 @@ func executeOutdatedActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubW
 }
 
 func mustGetIssueMessage(workflowName string, jobName string, step *workflowtypes.Step) string {
-	return fmt.Sprintf("The job named %q in the %q workflow is referencing an outdated commit from %q.", jobName, workflowName, step.Uses)
+	return fmt.Sprintf("The job named %q in the %q workflow is referencing an outdated commit from %q.", jobName, workflowName, step.Uses.Value)
 }

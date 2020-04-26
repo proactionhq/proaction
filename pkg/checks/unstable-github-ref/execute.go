@@ -23,21 +23,21 @@ const (
 	NotRecommendedTag  UnstableReason = iota
 )
 
-func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
+func executeUnstableRefCheckForWorkflow(parsedWorkflow workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
 		for stepIdx, step := range job.Steps {
-			if step.Uses == "" {
+			if step.Uses.Value == "" {
 				continue
 			}
 
 			// ignore docker uses
-			if strings.HasPrefix(step.Uses, "docker://") {
+			if strings.HasPrefix(step.Uses.Value, "docker://") {
 				continue
 			}
 
-			isStable, unstableReason, stableRef, err := isGitHubRefStable(step.Uses)
+			isStable, unstableReason, stableRef, err := isGitHubRefStable(step.Uses.Value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to check is github ref stable")
 			}
@@ -48,12 +48,14 @@ func executeUnstableRefCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 			message := mustGetIssueMessage(parsedWorkflow.Name, jobName, unstableReason, step)
 
 			i := issue.Issue{
-				CheckType: CheckName,
-				JobName:   jobName,
-				StepIdx:   stepIdx,
+				CheckType:  CheckName,
+				JobName:    jobName,
+				StepIdx:    stepIdx,
+				LineNumber: step.Uses.Line,
+
 				CheckData: map[string]interface{}{
 					"unstableReason":      unstableReason,
-					"originalGitHubRef":   step.Uses,
+					"originalGitHubRef":   step.Uses.Value,
 					"remediatedGitHubRef": stableRef,
 				},
 				Message:      message,
@@ -79,18 +81,18 @@ func mustGetIssueMessage(workflowName string, jobName string, unstableReason Uns
 		return "no specified version"
 	case IsMaster:
 		return fmt.Sprintf("The job named %q in the %q workflow is referencing an action on the master branch of the %q repo. The master branch of %q is likely to change.",
-			jobName, workflowName, step.Uses, step.Uses)
+			jobName, workflowName, step.Uses.Value, step.Uses.Value)
 	case IsBranch:
-		branch := strings.Split(step.Uses, "@")[1]
+		branch := strings.Split(step.Uses.Value, "@")[1]
 		return fmt.Sprintf("The job named %q in the %q workflow is using an action from %q. This is unstable because %q is a branch, and the contents might change.",
-			jobName, workflowName, step.Uses, branch)
+			jobName, workflowName, step.Uses.Value, branch)
 	case HasUnstableHistory:
 		return "has unsatable history"
 	case TagNotFound:
 		return "tag not found"
 	case NotRecommendedTag:
 		return fmt.Sprintf("The job named %q in the %q workflow is referencing an action in the %q repo, but not using a recommended tag.",
-			jobName, workflowName, step.Uses)
+			jobName, workflowName, step.Uses.Value)
 	}
 
 	return ""

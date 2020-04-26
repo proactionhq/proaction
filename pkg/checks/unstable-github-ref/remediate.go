@@ -1,23 +1,15 @@
 package unstablegithubref
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/proactionhq/proaction/pkg/issue"
-	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
-func remediateIssue(parsedWorkflow *workflowtypes.GitHubWorkflow, i *issue.Issue) error {
-	job, ok := parsedWorkflow.Jobs[i.JobName]
-	if !ok {
-		return errors.New("job not found in workflow")
-	}
+func RemediateIssue(content string, i *issue.Issue) (string, error) {
+	lines := strings.Split(content, "\n")
 
-	step := job.Steps[i.StepIdx]
+	lines[i.LineNumber-1] = strings.ReplaceAll(lines[i.LineNumber-1], i.CheckData["originalGitHubRef"].(string), i.CheckData["remediatedGitHubRef"].(string))
 
-	step.Uses = strings.ReplaceAll(step.Uses, i.CheckData["originalGitHubRef"].(string), i.CheckData["remediatedGitHubRef"].(string))
-	job.Steps[i.StepIdx] = step
-
-	return nil
+	return strings.Join(lines, "\n"), nil
 }
