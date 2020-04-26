@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	cursor "github.com/ahmetalpbalkan/go-cursor"
@@ -84,31 +83,21 @@ func ScanCmd() *cobra.Command {
 							fmt.Printf("\033[A")
 						}
 
-						maxCheckNameLength := 0
 						for _, checkName := range s.EnabledChecks {
-							if len(checkName) > maxCheckNameLength {
-								maxCheckNameLength = len(checkName)
-							}
-						}
-						for _, checkName := range s.EnabledChecks {
-							for len(checkName) < maxCheckNameLength {
-								checkName = checkName + " "
-							}
-
-							fmt.Printf("\r%s ", checkName)
+							fmt.Printf("\033[2K\r%s ", checkName)
 
 							// show the status of each check
-							progress, ok := s.Progress[strings.TrimSpace(checkName)]
+							progress, ok := s.Progress[checkName]
 							if ok {
 								steps, stepStatus := progress.Get()
 								for _, s := range steps {
 									if status, ok := stepStatus[s]; ok {
 										if status == progresstypes.ScannerStatusCompleted {
-											fmt.Printf(" ✓ ")
+											fmt.Printf(" [%s ✓] ", s)
 										} else if status == progresstypes.ScannerStatusRunning {
-											fmt.Printf(" %s ", s)
+											fmt.Printf(" [%s ⟳] ", s)
 										} else if status == progresstypes.ScannerStatusPending {
-											fmt.Printf(" . ")
+											fmt.Printf(" [%s …] ", s)
 										}
 									}
 								}
