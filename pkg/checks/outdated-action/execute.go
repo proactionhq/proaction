@@ -78,7 +78,7 @@ func executeOutdatedActionCheckForWorkflow(parsedWorkflow workflowtypes.GitHubWo
 				LineNumber: step.Uses.Line,
 
 				CheckData: map[string]interface{}{
-					"originalGitHubRef":   step.Uses,
+					"originalGitHubRef":   step.Uses.Value,
 					"remediatedGitHubRef": stableRef,
 				},
 				Message:      message,

@@ -78,7 +78,7 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow workflowtypes.GitHubWork
 				LineNumber: step.Uses.Line,
 
 				CheckData: map[string]interface{}{
-					"originalGitHubRef":   step.Uses,
+					"originalGitHubRef":   step.Uses.Value,
 					"remediatedGitHubRef": unforkedRef,
 				},
 				Message:      message,

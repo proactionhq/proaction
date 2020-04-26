@@ -49,7 +49,7 @@ func executeUnstableTagCheckForWorkflow(parsedWorkflow workflowtypes.GitHubWorkf
 				LineNumber: step.Uses.Line,
 
 				CheckData: map[string]interface{}{
-					"untableReason":  unstableReason,
+					"unstableReason": unstableReason,
 					"originalTag":    "",
 					"redmediatedTag": "",
 				},
