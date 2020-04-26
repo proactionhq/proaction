@@ -12,7 +12,7 @@ import (
 	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 )
 
-func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
+func executeUnforkActionCheckForWorkflow(parsedWorkflow workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
@@ -72,9 +72,11 @@ func executeUnforkActionCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWor
 			}
 
 			i := issue.Issue{
-				CheckType: CheckName,
-				JobName:   jobName,
-				StepIdx:   stepIdx,
+				CheckType:  CheckName,
+				JobName:    jobName,
+				StepIdx:    stepIdx,
+				LineNumber: step.Uses.Line,
+
 				CheckData: map[string]interface{}{
 					"originalGitHubRef":   step.Uses,
 					"remediatedGitHubRef": unforkedRef,

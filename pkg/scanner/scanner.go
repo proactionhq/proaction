@@ -5,6 +5,9 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	outdatedaction "github.com/proactionhq/proaction/pkg/checks/outdated-action"
+	unforkaction "github.com/proactionhq/proaction/pkg/checks/unfork-action"
+	unstabledockertag "github.com/proactionhq/proaction/pkg/checks/unstable-docker-tag"
 	unstablegithubref "github.com/proactionhq/proaction/pkg/checks/unstable-github-ref"
 	"github.com/proactionhq/proaction/pkg/issue"
 	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
@@ -62,31 +65,53 @@ func (s *Scanner) ScanWorkflow() error {
 				}
 				s.RemediatedContent = updated
 			}
+		} else if check == "unstable-docker-tag" {
+			issues, err := unstabledockertag.DetectIssues(parsedWorkflow)
+			if err != nil {
+				return errors.Wrap(err, "failed to run unstable unstable-docker-tag check")
+			}
+
+			s.Issues = append(s.Issues, issues...)
+
+			for _, i := range issues {
+				updated, err := unstabledockertag.RemediateIssue(s.getContent(), i)
+				if err != nil {
+					return errors.Wrap(err, "failed to apply remediation")
+				}
+				s.RemediatedContent = updated
+			}
+		} else if check == "outdated-action" {
+			issues, err := outdatedaction.DetectIssues(parsedWorkflow)
+			if err != nil {
+				return errors.Wrap(err, "failed to run unstable outdated-action check")
+			}
+
+			s.Issues = append(s.Issues, issues...)
+
+			for _, i := range issues {
+				updated, err := outdatedaction.RemediateIssue(s.getContent(), i)
+				if err != nil {
+					return errors.Wrap(err, "failed to apply remediation")
+				}
+				s.RemediatedContent = updated
+			}
+		} else if check == "unfork-action" {
+			issues, err := unforkaction.DetectIssues(parsedWorkflow)
+			if err != nil {
+				return errors.Wrap(err, "failed to run unstable unfork-action check")
+			}
+
+			s.Issues = append(s.Issues, issues...)
+
+			for _, i := range issues {
+				updated, err := unforkaction.RemediateIssue(s.getContent(), i)
+				if err != nil {
+					return errors.Wrap(err, "failed to apply remediation")
+				}
+				s.RemediatedContent = updated
+			}
 		}
 	}
-	// 	else if check == "unstable-docker-tag" {
-	// 		issues, err := unstabledockertag.Run(s.getContent(), &parsedWorkflow)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "failed to run unstable unstable-docker-tag check")
-	// 		}
-
-	// 		s.Issues = append(s.Issues, issues...)
-	// 	} else if check == "outdated-action" {
-	// 		issues, err := outdatedaction.Run(s.getContent(), &parsedWorkflow)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "failed to run unstable outdated-action check")
-	// 		}
-
-	// 		s.Issues = append(s.Issues, issues...)
-	// 	} else if check == "unfork-action" {
-	// 		issues, err := unforkaction.Run(s.getContent(), &parsedWorkflow)
-	// 		if err != nil {
-	// 			return errors.Wrap(err, "failed to run unstable unfork-action check")
-	// 		}
-
-	// 		s.Issues = append(s.Issues, issues...)
-	// 	}
-	// }
 
 	return nil
 }

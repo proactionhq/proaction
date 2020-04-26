@@ -18,7 +18,7 @@ const (
 	HasUnstableHistory UnstableReason = iota
 )
 
-func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
+func executeUnstableTagCheckForWorkflow(parsedWorkflow workflowtypes.GitHubWorkflow) ([]*issue.Issue, error) {
 	issues := []*issue.Issue{}
 
 	for jobName, job := range parsedWorkflow.Jobs {
@@ -43,9 +43,11 @@ func executeUnstableTagCheckForWorkflow(parsedWorkflow *workflowtypes.GitHubWork
 			message := mustGetIssueMessage(parsedWorkflow.Name, jobName, unstableReason, step)
 
 			i := issue.Issue{
-				CheckType: CheckName,
-				JobName:   jobName,
-				StepIdx:   stepIdx,
+				CheckType:  CheckName,
+				JobName:    jobName,
+				StepIdx:    stepIdx,
+				LineNumber: step.Uses.Line,
+
 				CheckData: map[string]interface{}{
 					"untableReason":  unstableReason,
 					"originalTag":    "",
