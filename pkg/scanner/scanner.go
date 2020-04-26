@@ -17,15 +17,17 @@ import (
 type ScannerStatus int
 
 const (
-	StatusWaiting   ScannerStatus = iota
-	StatusRunning   ScannerStatus = iota
-	StatusCompleted ScannerStatus = iota
+	ScannerStatusPending   ScannerStatus = iota
+	ScannerStatusRunning   ScannerStatus = iota
+	ScannerStatusCompleted ScannerStatus = iota
 )
 
 type ScannerProgress struct {
-	CheckName string
-	Status    ScannerStatus
+	Steps      []string
+	StepStatus map[string]ScannerStatus
 }
+
+type ScannerFunc func() ScannerProgress
 
 type Scanner struct {
 	OriginalContent   string
@@ -34,7 +36,7 @@ type Scanner struct {
 	EnabledChecks     []string
 	ParsedWorkflow    *workflowtypes.GitHubWorkflow
 	JobNames          []string
-	Progress          map[string][]ScannerProgress
+	Progress          map[string]ScannerFunc
 }
 
 func NewScanner(content string) (*Scanner, error) {
@@ -73,21 +75,30 @@ func (s *Scanner) EnableAllChecks() {
 }
 
 func (s *Scanner) initProgress() {
-	s.Progress = map[string][]ScannerProgress{}
+	s.Progress = map[string]ScannerFunc{}
 
-	reset := []ScannerProgress{}
-	for _, check := range s.EnabledChecks {
-		reset = append(reset, ScannerProgress{
-			CheckName: check,
-			Status:    StatusWaiting,
-		})
+	for _, enabledCheck := range s.EnabledChecks {
+		if enabledCheck == "unstable-github-ref" {
+			s.Progress[enabledCheck] = s.progressUnstableGitHubRef
+		}
 	}
+}
 
-	for _, jobName := range s.JobNames {
-		s.Progress[jobName] = reset
+func (s Scanner) progressUnstableGitHubRef() ScannerProgress {
+	return ScannerProgress{
+		Steps: []string{
+			"a",
+			"b",
+			"c",
+			"d",
+		},
+		StepStatus: map[string]ScannerStatus{
+			"a": ScannerStatusCompleted,
+			"b": ScannerStatusRunning,
+			"c": ScannerStatusPending,
+			"d": ScannerStatusPending,
+		},
 	}
-
-	fmt.Printf("%#v\n", s.Progress)
 }
 
 func (s *Scanner) ScanWorkflow() error {

@@ -83,28 +83,39 @@ func ScanCmd() *cobra.Command {
 							fmt.Printf("\033[A")
 						}
 
-						maxJobNameLength := 0
-						for _, jobName := range s.JobNames {
-							if len(jobName) > maxJobNameLength {
-								maxJobNameLength = len(jobName)
+						maxCheckNameLength := 0
+						for _, checkName := range s.EnabledChecks {
+							if len(checkName) > maxCheckNameLength {
+								maxCheckNameLength = len(checkName)
 							}
 						}
-						for _, jobName := range s.JobNames {
-							for len(jobName) < maxJobNameLength {
-								jobName = jobName + " "
+						for _, checkName := range s.EnabledChecks {
+							for len(checkName) < maxCheckNameLength {
+								checkName = checkName + " "
 							}
 
-							fmt.Printf("\r%s ", jobName)
+							fmt.Printf("\r%s ", checkName)
 
 							// show the status of each check
-							for _, status := range s.Progress[strings.TrimSpace(jobName)] {
-								fmt.Printf("%v", status)
+							progressFunc, ok := s.Progress[strings.TrimSpace(checkName)]
+							if ok {
+								scannerProgress := progressFunc()
+								for _, s := range scannerProgress.Steps {
+									if status, ok := scannerProgress.StepStatus[s]; ok {
+										if status == scanner.ScannerStatusCompleted {
+											fmt.Printf(" ✓ ")
+										} else if status == scanner.ScannerStatusRunning {
+											fmt.Printf(" %s ", s)
+										} else if status == scanner.ScannerStatusPending {
+											fmt.Printf(" ⌛ ")
+										}
+									}
+								}
 							}
-
 							fmt.Printf("\n")
 						}
 
-						lineCount = len(s.JobNames)
+						lineCount = len(s.EnabledChecks)
 
 					}
 				}
