@@ -11,16 +11,15 @@ import (
 	"regexp"
 	"time"
 
-	cursor "github.com/ahmetalpbalkan/go-cursor"
 	"github.com/google/go-github/v28/github"
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/internal/event"
 	"github.com/proactionhq/proaction/pkg/githubapi"
+	progresstypes "github.com/proactionhq/proaction/pkg/progress/types"
 	"github.com/proactionhq/proaction/pkg/scanner"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/tj/go-spin"
 )
 
 var (
@@ -52,38 +51,66 @@ func ScanCmd() *cobra.Command {
 				return errors.Wrap(err, "failed to read workflow content")
 			}
 
-			s := scanner.NewScanner()
-			s.OriginalContent = string(workflowContent)
+			s, err := scanner.NewScanner(string(workflowContent))
+			if err != nil {
+				return errors.Wrap(err, "failed to create scanner")
+			}
 
 			if len(v.GetStringSlice("check")) == 0 {
 				s.EnableAllChecks()
 			} else {
-				for _, check := range v.GetStringSlice("check") {
-					s.EnabledChecks = append(s.EnabledChecks, check)
-				}
+				s.EnableChecks(v.GetStringSlice("check"))
 			}
-
-			// Set up a spinner
-			fmt.Print(cursor.Hide())
-			defer func() {
-				fmt.Printf(cursor.Show())
-			}()
 
 			stopChan := make(chan bool)
 			stoppedChan := make(chan bool)
-			spinner := spin.New()
-			fmt.Printf(" %s Scanning workflow file", spinner.Next())
 			go func() {
+				lineCount := 0
 				for {
 					select {
 					case <-stopChan:
-						fmt.Printf("\r")
-						fmt.Printf(" Scan complete                   \n")
 						stoppedChan <- true
 						return
 					case <-time.After(time.Millisecond * 100):
-						fmt.Printf("\r")
-						fmt.Printf(" %s Scanning workflow file", spinner.Next())
+						for i := 0; i < lineCount; i++ {
+							fmt.Printf("\033[A")
+						}
+
+						maxCheckNameLength := 0
+						for _, checkName := range s.EnabledChecks {
+							if len(checkName) > maxCheckNameLength {
+								maxCheckNameLength = len(checkName)
+							}
+						}
+
+						for _, checkName := range s.EnabledChecks {
+							fmt.Printf("\033[2K\r%s ", checkName)
+
+							for i := len(checkName); i < maxCheckNameLength; i++ {
+								fmt.Printf(" ")
+							}
+
+							// show the status of each check
+							progress, ok := s.Progress[checkName]
+							if ok {
+								steps, stepStatus := progress.Get()
+								for _, s := range steps {
+									if status, ok := stepStatus[s]; ok {
+										if status == progresstypes.ScannerStatusCompleted {
+											fmt.Printf(" [%s ✓] ", s)
+										} else if status == progresstypes.ScannerStatusRunning {
+											fmt.Printf(" [%s ⟳] ", s)
+										} else if status == progresstypes.ScannerStatusPending {
+											fmt.Printf(" [%s …] ", s)
+										}
+									}
+								}
+							}
+							fmt.Printf("\n")
+						}
+
+						lineCount = len(s.EnabledChecks)
+
 					}
 				}
 			}()
