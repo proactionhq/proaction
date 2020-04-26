@@ -60,7 +60,7 @@ func Test_Trigger_UnmarshalYAML(t *testing.T) {
 			wantMultiEventVal: &MultiEvent{
 				Schedule: &ScheduleEvent{
 					Crons: []Cron{
-						Cron{
+						{
 							CronField: "0 */4 * * *",
 						},
 					},
