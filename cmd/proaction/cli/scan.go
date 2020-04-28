@@ -46,131 +46,43 @@ func ScanCmd() *cobra.Command {
 				}
 			}
 
-			workflowContent, filename, err := readWorkflowContent(args)
+			files, uris, err := parseArgs(args)
 			if err != nil {
-				return errors.Wrap(err, "failed to read workflow content")
+				return errors.Wrap(err, "failed to parse args")
 			}
 
-			s, err := scanner.NewScanner(string(workflowContent))
-			if err != nil {
-				return errors.Wrap(err, "failed to create scanner")
-			}
-
-			if len(v.GetStringSlice("check")) == 0 {
-				s.EnableAllChecks()
-			} else {
-				s.EnableChecks(v.GetStringSlice("check"))
-			}
-
-			stopChan := make(chan bool)
-			stoppedChan := make(chan bool)
-			go func() {
-				lineCount := 0
-				for {
-					select {
-					case <-stopChan:
-						stoppedChan <- true
-						return
-					case <-time.After(time.Millisecond * 100):
-						for i := 0; i < lineCount; i++ {
-							fmt.Printf("\033[A")
-						}
-
-						maxCheckNameLength := 0
-						for _, checkName := range s.EnabledChecks {
-							if len(checkName) > maxCheckNameLength {
-								maxCheckNameLength = len(checkName)
-							}
-						}
-
-						for _, checkName := range s.EnabledChecks {
-							fmt.Printf("\033[2K\r%s ", checkName)
-
-							for i := len(checkName); i < maxCheckNameLength; i++ {
-								fmt.Printf(" ")
-							}
-
-							// show the status of each check
-							progress, ok := s.Progress[checkName]
-							if ok {
-								steps, stepStatus := progress.Get()
-								for _, s := range steps {
-									if status, ok := stepStatus[s]; ok {
-										if status == progresstypes.ScannerStatusCompleted {
-											fmt.Printf(" [%s ✓] ", s)
-										} else if status == progresstypes.ScannerStatusRunning {
-											fmt.Printf(" [%s ⟳] ", s)
-										} else if status == progresstypes.ScannerStatusPending {
-											fmt.Printf(" [%s …] ", s)
-										}
-									}
-								}
-							}
-							fmt.Printf("\n")
-						}
-
-						lineCount = len(s.EnabledChecks)
-
-					}
-				}
-			}()
-
-			err = s.ScanWorkflow()
-			if err != nil {
-				return errors.Wrap(err, "failed to scan workflow")
-			}
-			stopChan <- true
-
-			select {
-			case <-stoppedChan:
-				break
-			case <-time.After(time.Millisecond * 100):
-				break
-			}
-			if len(s.Issues) == 0 {
-				fmt.Println("No recommendations found!")
-				os.Exit(0)
-			}
-
-			if !v.GetBool("quiet") {
-				fmt.Printf("%s\n", s.GetOutput())
-			}
-
-			if s.OriginalContent != s.RemediatedContent {
-				if v.GetBool("diff") {
-					dmp := diffmatchpatch.New()
-					charsA, charsB, lines := dmp.DiffLinesToChars(s.OriginalContent, s.RemediatedContent)
-					diffs := dmp.DiffMain(charsA, charsB, false)
-					diffs = dmp.DiffCharsToLines(diffs, lines)
-					fmt.Println(dmp.DiffPrettyText(dmp.DiffCleanupEfficiency(diffs)))
-				} else {
-					if v.GetBool("dry-run") {
-						fmt.Printf("%s\n", s.RemediatedContent)
-						return nil
-					}
-
-					if v.GetString("out") == "" {
-						err := ioutil.WriteFile(filename, []byte(s.RemediatedContent), 0755)
-						if err != nil {
-							return errors.Wrap(err, "failed to update workflow with remediations")
-						}
-					} else {
-						d, _ := filepath.Split(v.GetString("out"))
-						if err := os.MkdirAll(d, 0755); err != nil {
-							return errors.Wrap(err, "failed to mkdir for out file")
-						}
-
-						err := ioutil.WriteFile(v.GetString("out"), []byte(s.RemediatedContent), 0755)
-						if err != nil {
-							return errors.Wrap(err, "failed to update workflow with remediations")
-						}
-					}
+			recommendationCount := 0
+			for _, filename := range files {
+				workflowContent, err := readWorkflowContentFromFile(filename)
+				if err != nil {
+					return errors.Wrap(err, "failed to read workflow content")
 				}
 
-				// exit with a non-zero code because there are changes
+				count, err := scanWorkflow(workflowContent, filename)
+				if err != nil {
+					return errors.Wrap(err, "failed to scan workflow")
+				}
+
+				recommendationCount += count
+			}
+
+			for _, uri := range uris {
+				workflowContent, filename, err := readWorkflowContentFromURI(uri)
+				if err != nil {
+					return errors.Wrap(err, "failed to read workflow content")
+				}
+
+				count, err := scanWorkflow(workflowContent, filename)
+				if err != nil {
+					return errors.Wrap(err, "failed to scan workflow")
+				}
+
+				recommendationCount += count
+			}
+
+			if recommendationCount > 0 {
 				os.Exit(2)
 			}
-
 			return nil
 		},
 	}
@@ -185,52 +97,199 @@ func ScanCmd() *cobra.Command {
 	return cmd
 }
 
-func readWorkflowContent(args []string) ([]byte, string, error) {
+// scanWorkflow will scan the workflow in content, and return a bool == true if there
+// are recommendations found, and an error if we couldn't scan
+func scanWorkflow(workflowContent []byte, filename string) (int, error) {
 	v := viper.GetViper()
 
-	localFile := args[0]
+	s, err := scanner.NewScanner(string(workflowContent))
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to create scanner")
+	}
 
+	if len(v.GetStringSlice("check")) == 0 {
+		s.EnableAllChecks()
+	} else {
+		s.EnableChecks(v.GetStringSlice("check"))
+	}
+
+	stopChan := make(chan bool)
+	stoppedChan := make(chan bool)
+	go func() {
+		lineCount := 0
+		for {
+			select {
+			case <-stopChan:
+				stoppedChan <- true
+				return
+			case <-time.After(time.Millisecond * 100):
+				for i := 0; i < lineCount; i++ {
+					fmt.Printf("\033[A")
+				}
+
+				maxCheckNameLength := 0
+				for _, checkName := range s.EnabledChecks {
+					if len(checkName) > maxCheckNameLength {
+						maxCheckNameLength = len(checkName)
+					}
+				}
+
+				for _, checkName := range s.EnabledChecks {
+					fmt.Printf("\033[2K\r%s ", checkName)
+
+					for i := len(checkName); i < maxCheckNameLength; i++ {
+						fmt.Printf(" ")
+					}
+
+					// show the status of each check
+					progress, ok := s.Progress[checkName]
+					if ok {
+						steps, stepStatus := progress.Get()
+						for _, s := range steps {
+							if status, ok := stepStatus[s]; ok {
+								if status == progresstypes.ScannerStatusCompleted {
+									fmt.Printf(" [%s ✓] ", s)
+								} else if status == progresstypes.ScannerStatusRunning {
+									fmt.Printf(" [%s ⟳] ", s)
+								} else if status == progresstypes.ScannerStatusPending {
+									fmt.Printf(" [%s …] ", s)
+								}
+							}
+						}
+					}
+					fmt.Printf("\n")
+				}
+
+				lineCount = len(s.EnabledChecks)
+
+			}
+		}
+	}()
+
+	err = s.ScanWorkflow()
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to scan workflow")
+	}
+	stopChan <- true
+
+	select {
+	case <-stoppedChan:
+		break
+	case <-time.After(time.Millisecond * 100):
+		break
+	}
+	if len(s.Issues) == 0 {
+		fmt.Println("No recommendations found!")
+		os.Exit(0)
+	}
+
+	if !v.GetBool("quiet") {
+		fmt.Printf("%s\n", s.GetOutput())
+	}
+
+	if s.OriginalContent != s.RemediatedContent {
+		if v.GetBool("diff") {
+			dmp := diffmatchpatch.New()
+			charsA, charsB, lines := dmp.DiffLinesToChars(s.OriginalContent, s.RemediatedContent)
+			diffs := dmp.DiffMain(charsA, charsB, false)
+			diffs = dmp.DiffCharsToLines(diffs, lines)
+			fmt.Println(dmp.DiffPrettyText(dmp.DiffCleanupEfficiency(diffs)))
+		} else {
+			if v.GetBool("dry-run") {
+				fmt.Printf("%s\n", s.RemediatedContent)
+				return 1, nil
+			}
+
+			if v.GetString("out") == "" {
+				err := ioutil.WriteFile(filename, []byte(s.RemediatedContent), 0755)
+				if err != nil {
+					return 1, errors.Wrap(err, "failed to update workflow with remediations")
+				}
+			} else {
+				d, _ := filepath.Split(v.GetString("out"))
+				if err := os.MkdirAll(d, 0755); err != nil {
+					return 1, errors.Wrap(err, "failed to mkdir for out file")
+				}
+
+				err := ioutil.WriteFile(v.GetString("out"), []byte(s.RemediatedContent), 0755)
+				if err != nil {
+					return 1, errors.Wrap(err, "failed to update workflow with remediations")
+				}
+			}
+		}
+
+		return 1, nil
+	}
+
+	return 0, nil
+}
+
+// parseArgs takes the input and returns an unglobbed list of files and urls
+func parseArgs(args []string) ([]string, []string, error) {
+	files := []string{}
+	urls := []string{}
+
+	for _, arg := range args {
+		_, err := url.ParseRequestURI(arg)
+		if err == nil {
+			urls = append(urls, arg)
+			continue
+		}
+
+		matches, err := filepath.Glob(arg)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "failed to parse glob")
+		}
+
+		if matches != nil {
+			files = append(files, matches...)
+		}
+	}
+
+	return files, urls, nil
+}
+
+func readWorkflowContentFromURI(uri string) ([]byte, string, error) {
 	// Let's be kind. If someone put in a github.com url, we can probably download
 	// the file, flip a few flags around and print the recommendations to stdout
-	parsedURL, err := url.ParseRequestURI(localFile)
-	if err == nil {
-		// TODO we should support domains that aren't github.com
-		if parsedURL.Hostname() == "github.com" {
-			downloadedFile, err := downloadFileFromGitHub(parsedURL.Path)
-			if err != nil {
-				return nil, "", errors.Wrap(err, "tried unsuccesfully to download file from github")
-			}
-			defer os.RemoveAll(downloadedFile)
+	parsedURL, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return nil, "", errors.Wrap(err, "failed to parse uri")
+	}
 
-			localFile = downloadedFile
-
-			v.Set("diff", true)
-		} else if parsedURL.Hostname() == "raw.githubusercontent.com" {
-			resp, err := http.DefaultClient.Get(parsedURL.String())
-			if err != nil {
-				return nil, "", errors.Wrap(err, "failed to download raw github file")
-			}
-			defer resp.Body.Close()
-
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return nil, "", errors.Wrap(err, "failed to read response body")
-			}
-
-			tmpFile, err := ioutil.TempFile("", "proaction")
-			if err != nil {
-				return nil, "", errors.Wrap(err, "failed to create temp file")
-			}
-			defer os.RemoveAll(tmpFile.Name())
-
-			if err := ioutil.WriteFile(tmpFile.Name(), []byte(body), 0755); err != nil {
-				return nil, "", errors.Wrap(err, "failed to save to temp file")
-			}
-
-			localFile = tmpFile.Name()
-
-			v.Set("diff", true)
+	localFile := ""
+	// TODO we should support domains that aren't github.com
+	if parsedURL.Hostname() == "github.com" {
+		downloadedFile, err := downloadFileFromGitHub(parsedURL.Path)
+		if err != nil {
+			return nil, "", errors.Wrap(err, "tried unsuccesfully to download file from github")
 		}
+		defer os.RemoveAll(downloadedFile)
+
+		localFile = downloadedFile
+	} else if parsedURL.Hostname() == "raw.githubusercontent.com" {
+		resp, err := http.DefaultClient.Get(parsedURL.String())
+		if err != nil {
+			return nil, "", errors.Wrap(err, "failed to download raw github file")
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, "", errors.Wrap(err, "failed to read response body")
+		}
+
+		tmpFile, err := ioutil.TempFile("", "proaction")
+		if err != nil {
+			return nil, "", errors.Wrap(err, "failed to create temp file")
+		}
+		defer os.RemoveAll(tmpFile.Name())
+
+		if err := ioutil.WriteFile(tmpFile.Name(), []byte(body), 0755); err != nil {
+			return nil, "", errors.Wrap(err, "failed to save to temp file")
+		}
+
+		localFile = tmpFile.Name()
 	}
 
 	content, err := ioutil.ReadFile(localFile)
@@ -239,6 +298,15 @@ func readWorkflowContent(args []string) ([]byte, string, error) {
 	}
 
 	return content, localFile, nil
+}
+
+func readWorkflowContentFromFile(localFile string) ([]byte, error) {
+	content, err := ioutil.ReadFile(localFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read workflow")
+	}
+
+	return content, nil
 }
 
 func downloadFileFromGitHub(path string) (string, error) {
