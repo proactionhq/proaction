@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v28/github"
+	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 	"github.com/proactionhq/proaction/internal/event"
 	"github.com/proactionhq/proaction/pkg/githubapi"
@@ -51,19 +52,16 @@ func ScanCmd() *cobra.Command {
 				return errors.Wrap(err, "failed to parse args")
 			}
 
-			recommendationCount := 0
 			for _, filename := range files {
 				workflowContent, err := readWorkflowContentFromFile(filename)
 				if err != nil {
 					return errors.Wrap(err, "failed to read workflow content")
 				}
 
-				count, err := scanWorkflow(workflowContent, filename)
+				_, err = scanWorkflow(workflowContent, filename)
 				if err != nil {
 					return errors.Wrap(err, "failed to scan workflow")
 				}
-
-				recommendationCount += count
 			}
 
 			for _, uri := range uris {
@@ -72,17 +70,12 @@ func ScanCmd() *cobra.Command {
 					return errors.Wrap(err, "failed to read workflow content")
 				}
 
-				count, err := scanWorkflow(workflowContent, filename)
+				_, err = scanWorkflow(workflowContent, filename)
 				if err != nil {
 					return errors.Wrap(err, "failed to scan workflow")
 				}
-
-				recommendationCount += count
 			}
 
-			if recommendationCount > 0 {
-				os.Exit(2)
-			}
 			return nil
 		},
 	}
@@ -123,6 +116,10 @@ func scanWorkflow(workflowContent []byte, filename string) (int, error) {
 				stoppedChan <- true
 				return
 			case <-time.After(time.Millisecond * 100):
+				if !isatty.IsTerminal(os.Stdout.Fd()) {
+					return
+				}
+
 				for i := 0; i < lineCount; i++ {
 					fmt.Printf("\033[A")
 				}
@@ -179,8 +176,7 @@ func scanWorkflow(workflowContent []byte, filename string) (int, error) {
 		break
 	}
 	if len(s.Issues) == 0 {
-		fmt.Println("No recommendations found!")
-		os.Exit(0)
+		return 0, nil
 	}
 
 	if !v.GetBool("quiet") {
@@ -197,7 +193,7 @@ func scanWorkflow(workflowContent []byte, filename string) (int, error) {
 		} else {
 			if v.GetBool("dry-run") {
 				fmt.Printf("%s\n", s.RemediatedContent)
-				return 1, nil
+				return 0, nil
 			}
 
 			if v.GetString("out") == "" {
@@ -218,7 +214,7 @@ func scanWorkflow(workflowContent []byte, filename string) (int, error) {
 			}
 		}
 
-		return 1, nil
+		return 0, nil
 	}
 
 	return 0, nil
