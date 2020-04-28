@@ -9,6 +9,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - uses: proactionhq/proaction/action@v0.3.3
+        with:
+          workflow-files: .github/workflows/build-test-deploy.yaml
 
       - uses: peter-evans/create-pull-request@v2
         with:
