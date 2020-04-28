@@ -35,6 +35,14 @@ archives:
       - LICENSE*
       - readme*
       - README*
+dockers:
+  - goos: linux
+    goarch: amd64
+    image_templates:
+      - "proactionhq/proaction:latest"
+      - "proactionhq/proaction:{{ .Major }}.{{ .Minor }}.{{ .Patch }}"
+    dockerfile: deploy/Dockerfile
+
 brews:
   - name: proaction
     ids:
@@ -49,7 +57,7 @@ brews:
     homepage: "https://proaction.io"
     description: "Build better GitHub Action Workflows"
     skip_upload: false
-    
+
 ## need snapcrap installed before we can do this
 # snapcrafts:
 #   - id: proaction
@@ -61,7 +69,7 @@ brews:
 #     summary: "Build better GitHub Action Workflows"
 #     description: |
 #       Proaction is a CLI that improves your GitHub Action workflows by
-#       suggesting changes that will improve reliability and create more 
+#       suggesting changes that will improve reliability and create more
 #       reproducible workflow executions.
 #     confinement: classic
 #     license: Apache2
