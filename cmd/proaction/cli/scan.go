@@ -46,129 +46,144 @@ func ScanCmd() *cobra.Command {
 				}
 			}
 
-			workflowContent, filename, err := readWorkflowContent(args)
+			files, urls, err := parseArgs(args)
 			if err != nil {
-				return errors.Wrap(err, "failed to read workflow content")
+				return errors.Wrap(err, "failed to parse args")
 			}
 
-			s, err := scanner.NewScanner(string(workflowContent))
-			if err != nil {
-				return errors.Wrap(err, "failed to create scanner")
+			localFiles := []string{}
+			for _, file := range files {
+				localFiles = append(localFiles, file)
+			}
+			for _, url := range urls {
+				localFiles = append(localFiles, url)
 			}
 
-			if len(v.GetStringSlice("check")) == 0 {
-				s.EnableAllChecks()
-			} else {
-				s.EnableChecks(v.GetStringSlice("check"))
-			}
+			for _, file := range files {
+				workflowContent, filename, err := readWorkflowContent(file)
+				if err != nil {
+					return errors.Wrap(err, "failed to read workflow content")
+				}
 
-			stopChan := make(chan bool)
-			stoppedChan := make(chan bool)
-			go func() {
-				lineCount := 0
-				for {
-					select {
-					case <-stopChan:
-						stoppedChan <- true
-						return
-					case <-time.After(time.Millisecond * 100):
-						for i := 0; i < lineCount; i++ {
-							fmt.Printf("\033[A")
-						}
+				s, err := scanner.NewScanner(string(workflowContent))
+				if err != nil {
+					return errors.Wrap(err, "failed to create scanner")
+				}
 
-						maxCheckNameLength := 0
-						for _, checkName := range s.EnabledChecks {
-							if len(checkName) > maxCheckNameLength {
-								maxCheckNameLength = len(checkName)
+				if len(v.GetStringSlice("check")) == 0 {
+					s.EnableAllChecks()
+				} else {
+					s.EnableChecks(v.GetStringSlice("check"))
+				}
+
+				stopChan := make(chan bool)
+				stoppedChan := make(chan bool)
+				go func() {
+					lineCount := 0
+					for {
+						select {
+						case <-stopChan:
+							stoppedChan <- true
+							return
+						case <-time.After(time.Millisecond * 100):
+							for i := 0; i < lineCount; i++ {
+								fmt.Printf("\033[A")
 							}
-						}
 
-						for _, checkName := range s.EnabledChecks {
-							fmt.Printf("\033[2K\r%s ", checkName)
-
-							for i := len(checkName); i < maxCheckNameLength; i++ {
-								fmt.Printf(" ")
+							maxCheckNameLength := 0
+							for _, checkName := range s.EnabledChecks {
+								if len(checkName) > maxCheckNameLength {
+									maxCheckNameLength = len(checkName)
+								}
 							}
 
-							// show the status of each check
-							progress, ok := s.Progress[checkName]
-							if ok {
-								steps, stepStatus := progress.Get()
-								for _, s := range steps {
-									if status, ok := stepStatus[s]; ok {
-										if status == progresstypes.ScannerStatusCompleted {
-											fmt.Printf(" [%s ✓] ", s)
-										} else if status == progresstypes.ScannerStatusRunning {
-											fmt.Printf(" [%s ⟳] ", s)
-										} else if status == progresstypes.ScannerStatusPending {
-											fmt.Printf(" [%s …] ", s)
+							for _, checkName := range s.EnabledChecks {
+								fmt.Printf("\033[2K\r%s ", checkName)
+
+								for i := len(checkName); i < maxCheckNameLength; i++ {
+									fmt.Printf(" ")
+								}
+
+								// show the status of each check
+								progress, ok := s.Progress[checkName]
+								if ok {
+									steps, stepStatus := progress.Get()
+									for _, s := range steps {
+										if status, ok := stepStatus[s]; ok {
+											if status == progresstypes.ScannerStatusCompleted {
+												fmt.Printf(" [%s ✓] ", s)
+											} else if status == progresstypes.ScannerStatusRunning {
+												fmt.Printf(" [%s ⟳] ", s)
+											} else if status == progresstypes.ScannerStatusPending {
+												fmt.Printf(" [%s …] ", s)
+											}
 										}
 									}
 								}
+								fmt.Printf("\n")
 							}
-							fmt.Printf("\n")
+
+							lineCount = len(s.EnabledChecks)
+
 						}
-
-						lineCount = len(s.EnabledChecks)
-
 					}
+				}()
+
+				err = s.ScanWorkflow()
+				if err != nil {
+					return errors.Wrap(err, "failed to scan workflow")
 				}
-			}()
+				stopChan <- true
 
-			err = s.ScanWorkflow()
-			if err != nil {
-				return errors.Wrap(err, "failed to scan workflow")
-			}
-			stopChan <- true
+				select {
+				case <-stoppedChan:
+					break
+				case <-time.After(time.Millisecond * 100):
+					break
+				}
+				if len(s.Issues) == 0 {
+					fmt.Println("No recommendations found!")
+					os.Exit(0)
+				}
 
-			select {
-			case <-stoppedChan:
-				break
-			case <-time.After(time.Millisecond * 100):
-				break
-			}
-			if len(s.Issues) == 0 {
-				fmt.Println("No recommendations found!")
-				os.Exit(0)
-			}
+				if !v.GetBool("quiet") {
+					fmt.Printf("%s\n", s.GetOutput())
+				}
 
-			if !v.GetBool("quiet") {
-				fmt.Printf("%s\n", s.GetOutput())
-			}
-
-			if s.OriginalContent != s.RemediatedContent {
-				if v.GetBool("diff") {
-					dmp := diffmatchpatch.New()
-					charsA, charsB, lines := dmp.DiffLinesToChars(s.OriginalContent, s.RemediatedContent)
-					diffs := dmp.DiffMain(charsA, charsB, false)
-					diffs = dmp.DiffCharsToLines(diffs, lines)
-					fmt.Println(dmp.DiffPrettyText(dmp.DiffCleanupEfficiency(diffs)))
-				} else {
-					if v.GetBool("dry-run") {
-						fmt.Printf("%s\n", s.RemediatedContent)
-						return nil
-					}
-
-					if v.GetString("out") == "" {
-						err := ioutil.WriteFile(filename, []byte(s.RemediatedContent), 0755)
-						if err != nil {
-							return errors.Wrap(err, "failed to update workflow with remediations")
-						}
+				if s.OriginalContent != s.RemediatedContent {
+					if v.GetBool("diff") {
+						dmp := diffmatchpatch.New()
+						charsA, charsB, lines := dmp.DiffLinesToChars(s.OriginalContent, s.RemediatedContent)
+						diffs := dmp.DiffMain(charsA, charsB, false)
+						diffs = dmp.DiffCharsToLines(diffs, lines)
+						fmt.Println(dmp.DiffPrettyText(dmp.DiffCleanupEfficiency(diffs)))
 					} else {
-						d, _ := filepath.Split(v.GetString("out"))
-						if err := os.MkdirAll(d, 0755); err != nil {
-							return errors.Wrap(err, "failed to mkdir for out file")
+						if v.GetBool("dry-run") {
+							fmt.Printf("%s\n", s.RemediatedContent)
+							return nil
 						}
 
-						err := ioutil.WriteFile(v.GetString("out"), []byte(s.RemediatedContent), 0755)
-						if err != nil {
-							return errors.Wrap(err, "failed to update workflow with remediations")
+						if v.GetString("out") == "" {
+							err := ioutil.WriteFile(filename, []byte(s.RemediatedContent), 0755)
+							if err != nil {
+								return errors.Wrap(err, "failed to update workflow with remediations")
+							}
+						} else {
+							d, _ := filepath.Split(v.GetString("out"))
+							if err := os.MkdirAll(d, 0755); err != nil {
+								return errors.Wrap(err, "failed to mkdir for out file")
+							}
+
+							err := ioutil.WriteFile(v.GetString("out"), []byte(s.RemediatedContent), 0755)
+							if err != nil {
+								return errors.Wrap(err, "failed to update workflow with remediations")
+							}
 						}
 					}
-				}
 
-				// exit with a non-zero code because there are changes
-				os.Exit(2)
+					// exit with a non-zero code because there are changes
+					os.Exit(2)
+				}
 			}
 
 			return nil
@@ -185,10 +200,33 @@ func ScanCmd() *cobra.Command {
 	return cmd
 }
 
-func readWorkflowContent(args []string) ([]byte, string, error) {
-	v := viper.GetViper()
+// parseArgs takes the input and returns an unglobbed list of files and urls
+func parseArgs(args []string) ([]string, []string, error) {
+	files := []string{}
+	urls := []string{}
 
-	localFile := args[0]
+	for _, arg := range args {
+		_, err := url.ParseRequestURI(arg)
+		if err == nil {
+			urls = append(urls, arg)
+			continue
+		}
+
+		matches, err := filepath.Glob(arg)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "failed to parse glob")
+		}
+
+		if matches != nil {
+			files = append(files, matches...)
+		}
+	}
+
+	return files, urls, nil
+}
+
+func readWorkflowContent(localFile string) ([]byte, string, error) {
+	v := viper.GetViper()
 
 	// Let's be kind. If someone put in a github.com url, we can probably download
 	// the file, flip a few flags around and print the recommendations to stdout
