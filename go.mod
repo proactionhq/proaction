@@ -11,6 +11,7 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v28 v28.1.1
+	github.com/mattn/go-isatty v0.0.12
 	github.com/pkg/errors v0.8.0
 	github.com/sergi/go-diff v1.1.0
 	github.com/spf13/cobra v0.0.5

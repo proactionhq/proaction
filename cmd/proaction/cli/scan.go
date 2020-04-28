@@ -117,7 +117,7 @@ func scanWorkflow(workflowContent []byte, filename string) (int, error) {
 				return
 			case <-time.After(time.Millisecond * 100):
 				if !isatty.IsTerminal(os.Stdout.Fd()) {
-					return
+					continue
 				}
 
 				for i := 0; i < lineCount; i++ {
