@@ -2,16 +2,9 @@
 
 # Proaction
 
-[Proaction](https://proaction.io) is a CLI that recommends and updates GitHub Action Workflows in order to make them more reliable. Certain patterns in Workflows can result in flakey and unreliable output, or can create dependencies that break when external Actions are updated.
+[Proaction](https://proaction.io) is a CLI that recommends and updates GitHub Action Workflows in order to make them more reliable. Certain patterns in Workflows can result in flaky and unreliable output, or can create dependencies that break when external Actions are updated.
 
 The goal of Proaction is to encourage creating workflows that secure, reliable, and will not change unexpectedly.
-
-## Current Proaction Checks
-
-- [x] [Unstable GitHub Ref](https://docs.proaction.io/proactions/unstable-github-ref/description/)
-- [x] [Unstable Docker Tag](https://docs.proaction.io/proactions/unstable-docker-tag/description/)
-- [x] [Outdated Action](https://docs.proaction.io/proactions/outdated-action/description/)
-- [x] [Unfork Action](https://docs.proaction.io/proactions/unfork-action/description/)
 
 ## Best Practices
 
@@ -45,9 +38,13 @@ To install Proaction, download the latest release from the [Releases](https://gi
 $ proaction scan ./path/to/.github/workflows/workflow.yaml
 ```
 
+### Running In GitHub Actions
+
+Proaction can run as a GitHub Action. To create a workflow using Proaction, [read the Action documentation](https://github.com/proactionhq/proaction/tree/master/action).
+
 ## Read More
 
-To read more, visit the [documentation](https://docs.proaction.io). The docs list all of the Proaction checks that are performed and explain the reasons for each.
+To read more, visit the [documentation](https://proaction.io). The docs list all of the Proaction checks that are performed and explain the reasons for each.
 
 ### GitHub API and Rate Limits
 
