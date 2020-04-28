@@ -55,8 +55,8 @@ func DetermineGitHubRefType(owner string, repo string, unknownRef string) (*Poss
 	githubClient := githubapi.NewGitHubClient()
 	tagResponse, githubResponse, err := githubClient.Git.GetRef(context.Background(), owner, repo, fmt.Sprintf("tags/%s", unknownRef))
 	if err != nil {
-		if githubResponse.Response.StatusCode != 404 {
-			return nil, nil, false, errors.Wrap(err, "failed to get tag ref")
+		if githubResponse.Response.StatusCode != 404 && err.Error() != "multiple matches found for this ref" {
+			return nil, nil, false, errors.Wrapf(err, "failed to get tag ref for owner %s, repo %s, tag %s", owner, repo, unknownRef)
 		}
 	}
 
