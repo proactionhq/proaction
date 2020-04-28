@@ -69,8 +69,8 @@ jobs:
 
       - uses: azure/docker-login@v1
         with:
-        username: proactionbot
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          username: proactionbot
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1
