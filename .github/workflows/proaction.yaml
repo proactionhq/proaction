@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - issue/30
+      - master
 
 jobs:
   run-proaction:
@@ -9,9 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: proactionhq/proaction/action@issue/30
-        with:
-          workflow-files: ".github/workflows/build-test-deploy.yaml"
+      - uses: proactionhq/proaction/action@v0.3.2
+
       - uses: peter-evans/create-pull-request@v2
         with:
           commit-message: "[proaction] updating workflow"
