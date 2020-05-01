@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: proactionhq/proaction/action@v0.3.3
+      - uses: proactionhq/proaction/action@v0.3.4
         with:
           workflow-files: .github/workflows/build-test-deploy.yaml
 

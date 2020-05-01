@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: proactionhq/proaction/action@v0.3.3
+      - uses: proactionhq/proaction/action@v0.3.4
 
       - uses: peter-evans/create-pull-request@v2
         with:
