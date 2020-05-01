@@ -32,11 +32,16 @@ func isGitHubRefStable(githubRef string) (bool, UnstableReason, string, error) {
 
 	updatedRef := ""
 	if maybeBranch != nil {
-		if path == "" {
-			updatedRef = fmt.Sprintf("%s/%s@%s", owner, repo, maybeBranch.CommitSHA)
-		} else {
-			updatedRef = fmt.Sprintf("%s/%s/%s@%s", owner, repo, path, maybeBranch.CommitSHA)
+		updatedRefFromBranch, err := getUpdatedRefFromBranch(owner, repo, path, maybeBranch.BranchName, maybeBranch.CommitSHA)
+		if err != nil {
+			return false, UnknownReason, "", errors.Wrap(err, "failed to get updated ref from branch")
 		}
+
+		if updatedRefFromBranch == githubRef {
+			return true, IsStable, githubRef, nil
+		}
+
+		updatedRef = updatedRefFromBranch
 	} else if possiblyStableTag != nil {
 		allTags, err := ref.ListTagsInRepo(owner, repo)
 		if err != nil {
@@ -45,7 +50,7 @@ func isGitHubRefStable(githubRef string) (bool, UnstableReason, string, error) {
 
 		updatedRefFromTag, err := getUpdatedRefFromTag(owner, repo, path, possiblyStableTag.TagName, possiblyStableTag.CommitSHA, allTags)
 		if err != nil {
-			return false, UnknownReason, "", errors.Wrap(err, "failed to get updated tag ref")
+			return false, UnknownReason, "", errors.Wrap(err, "failed to get updated ref from branch")
 		}
 		if updatedRefFromTag == githubRef {
 			return true, IsStable, githubRef, nil

@@ -86,6 +86,7 @@ func ScanCmd() *cobra.Command {
 	cmd.Flags().Bool("quiet", false, "when set, proaction will not print explanations but will only update the workflow files with recommendations")
 	cmd.Flags().Bool("debug", false, "when set, echo debug statements")
 	cmd.Flags().Bool("diff", false, "when set, instead of writing the file, just show a diff")
+	cmd.Flags().Bool("silent", false, "when set, the spinners will not be displayed")
 
 	return cmd
 }
@@ -116,7 +117,7 @@ func scanWorkflow(workflowContent []byte, filename string) (int, error) {
 				stoppedChan <- true
 				return
 			case <-time.After(time.Millisecond * 100):
-				if !isatty.IsTerminal(os.Stdout.Fd()) {
+				if v.GetBool("silent") || !isatty.IsTerminal(os.Stdout.Fd()) {
 					continue
 				}
 
