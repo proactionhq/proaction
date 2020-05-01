@@ -11,5 +11,11 @@
     "recommendedRefs": [
       "0.1.1"
     ]
+  },
+  "digitalocean/action-doctl": {
+    "recommendedRefType": "tag",
+    "recommendedRefs": [
+      "v2.0.0"
+    ]
   }
 }
