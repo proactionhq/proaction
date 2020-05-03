@@ -21,12 +21,13 @@ jobs:
 
       - uses: proactionhq/proaction/action@v0.3.4
         with:
-          token: ${{ secrets.PROACTION_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: peter-evans/create-pull-request@v2
         with:
           commit-message: "[proaction] updating workflow"
           title: Updating workflow from Proaction
+          token: $${{ secrets.PROACTION_TOKEN }}
 ```
 
 This workflow will run daily and create pull requests with any updated found.
