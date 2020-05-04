@@ -191,7 +191,7 @@ func (me *MultiEvent) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		case "schedule":
 			scheduleEvent := ScheduleEvent{}
 			for _, v := range rawVal.([]interface{}) {
-				vv := v.(map[interface{}]interface{})
+				vv := v.(map[string]interface{})
 				if vvv, ok := vv["cron"]; ok {
 					scheduleEvent.Crons = append(scheduleEvent.Crons, Cron{CronField: vvv.(string)})
 				}
