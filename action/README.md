@@ -27,7 +27,7 @@ jobs:
         with:
           commit-message: "[proaction] updating workflow"
           title: Updating workflow from Proaction
-          token: ${{ secrets.PROACTION_TOKEN }}
+          token: $${{ secrets.PROACTION_TOKEN }}
 ```
 
 This workflow will run daily and create pull requests with any updated found.
