@@ -5,8 +5,13 @@ inputs:
     description: "Workflow Files"
     required: false
     default: ".github/workflows/**"
+  github-token:
+    description: "GitHub API Token"
+    required: false
 runs:
   using: "docker"
   image: "Dockerfile"
+  env:
+    GITHUB_TOKEN: ${{ inputs.github-token }}
   args:
-    - "/proaction scan ${{inputs.workflow-files}}"
+    - "/proaction scan ${{ inputs.workflow-files }}"

@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - uses: proactionhq/proaction/action@v0.3.4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: peter-evans/create-pull-request@v2
         with:
