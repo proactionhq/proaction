@@ -61,6 +61,7 @@ collect:
     parser: githubref
     collectors:
       - repoInfo
+      - refInfo
       - branches
       - tags
       - commits
@@ -92,12 +93,10 @@ repos:
       - 123def
     branches:
       - name: branch1
-        commits:
-          - abc12345
-          - 234bdfd3
+        head: abcdef
     tags:
       - name: v0.1.1
-        commit: abcd123
+        head: abcd123
 
 ```
 

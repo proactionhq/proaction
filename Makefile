@@ -36,9 +36,15 @@ endef
 test:
 	go test ./pkg/... ./cmd/... ./internal/... -coverprofile cover.out
 
+.PHONY: generate
+generate:
+	go generate github.com/proactionhq/proaction/pkg/checks
+
 .PHONY: proaction
-proaction: fmt vet
-	go build ${LDFLAGS} -o bin/proaction github.com/proactionhq/proaction/cmd/proaction
+proaction: generate fmt vet
+	go build ${LDFLAGS} \
+		-o bin/proaction \
+		github.com/proactionhq/proaction/cmd/proaction
 
 .PHONY: fmt
 fmt:
@@ -46,7 +52,7 @@ fmt:
 
 .PHONY: vet
 vet:
-	go vet ./pkg/... ./internal/... ./cmd/... 
+	go vet ./pkg/... ./internal/... ./cmd/...
 
 .PHONY: integration
 integration: proaction

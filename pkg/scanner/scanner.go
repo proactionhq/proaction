@@ -1,34 +1,39 @@
 package scanner
 
 import (
+	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/pkg/errors"
-	outdatedaction "github.com/proactionhq/proaction/pkg/checks/outdated-action"
-	unforkaction "github.com/proactionhq/proaction/pkg/checks/unfork-action"
-	unstabledockertag "github.com/proactionhq/proaction/pkg/checks/unstable-docker-tag"
-	unstablegithubref "github.com/proactionhq/proaction/pkg/checks/unstable-github-ref"
+	"github.com/proactionhq/proaction/pkg/checks"
+	checktypes "github.com/proactionhq/proaction/pkg/checks/types"
+	"github.com/proactionhq/proaction/pkg/collect"
+	"github.com/proactionhq/proaction/pkg/collect/types"
+	collecttypes "github.com/proactionhq/proaction/pkg/collect/types"
+	"github.com/proactionhq/proaction/pkg/evaluate"
+	evaluatetypes "github.com/proactionhq/proaction/pkg/evaluate/types"
 	"github.com/proactionhq/proaction/pkg/issue"
-	progresstypes "github.com/proactionhq/proaction/pkg/progress/types"
+	"github.com/proactionhq/proaction/pkg/remediate"
+	remediatetypes "github.com/proactionhq/proaction/pkg/remediate/types"
 	workflowtypes "github.com/proactionhq/proaction/pkg/workflow/types"
 	"gopkg.in/yaml.v3"
 )
 
 type Scanner struct {
-	OriginalContent   string
-	RemediatedContent string
+	Filename          string
+	OriginalContent   []byte
+	RemediatedContent []byte
 	Issues            []*issue.Issue
-	EnabledChecks     []string
+	EnabledChecks     []*checktypes.Check
 	ParsedWorkflow    *workflowtypes.GitHubWorkflow
 	JobNames          []string
 
-	Progress map[string]progresstypes.Progress
+	Results []evaluatetypes.EvaluateResult
 }
 
-func NewScanner(content string) (*Scanner, error) {
+func NewScanner(filename string, content []byte) (*Scanner, error) {
 	parsedWorkflow := workflowtypes.GitHubWorkflow{}
-	if err := yaml.Unmarshal([]byte(content), &parsedWorkflow); err != nil {
+	if err := yaml.Unmarshal(content, &parsedWorkflow); err != nil {
 		return nil, errors.Wrap(err, "failed to parse content")
 	}
 
@@ -38,139 +43,102 @@ func NewScanner(content string) (*Scanner, error) {
 	}
 
 	return &Scanner{
+		Filename:        filename,
 		OriginalContent: content,
 		Issues:          []*issue.Issue{},
-		EnabledChecks:   []string{},
+		EnabledChecks:   []*checktypes.Check{},
 		ParsedWorkflow:  &parsedWorkflow,
 		JobNames:        jobNames,
 	}, nil
 }
 
-func (s *Scanner) EnableChecks(checks []string) {
+func (s *Scanner) EnableChecks(checks []*checktypes.Check) {
 	s.EnabledChecks = checks
-	s.initProgress()
 }
 
 func (s *Scanner) EnableAllChecks() {
-	s.EnabledChecks = []string{
-		"unfork-action",
-		"unstable-docker-tag",
-		"unstable-github-ref",
-		"outdated-action",
-	}
-	s.initProgress()
-}
-
-func (s *Scanner) initProgress() {
-	s.Progress = map[string]progresstypes.Progress{}
-
-	for _, enabledCheck := range s.EnabledChecks {
-		// not all checks will use job segmentation for status
-		if enabledCheck == "unstable-github-ref" {
-			progress := progresstypes.Progress{}
-			for _, jobName := range s.JobNames {
-				progress.Set(jobName, false, false)
-			}
-			s.Progress[enabledCheck] = progress
-		} else if enabledCheck == "unfork-action" {
-			progress := progresstypes.Progress{}
-			for _, jobName := range s.JobNames {
-				progress.Set(jobName, false, false)
-			}
-			s.Progress[enabledCheck] = progress
-		} else if enabledCheck == "unstable-docker-tag" {
-			progress := progresstypes.Progress{}
-			for _, jobName := range s.JobNames {
-				progress.Set(jobName, false, false)
-			}
-			s.Progress[enabledCheck] = progress
-		} else if enabledCheck == "outdated-action" {
-			progress := progresstypes.Progress{}
-			for _, jobName := range s.JobNames {
-				progress.Set(jobName, false, false)
-			}
-			s.Progress[enabledCheck] = progress
-		}
+	s.EnabledChecks = []*checktypes.Check{
+		checks.UnstableGitHubRef(),
+		checks.Outdated(),
+		checks.Unfork(),
 	}
 }
 
 func (s *Scanner) ScanWorkflow() error {
-	sort.Sort(byPriority(s.EnabledChecks))
+	// build collectors
+	collectors := []collecttypes.Collector{}
+	for _, enabledCheck := range s.EnabledChecks {
+		for _, checkCollector := range enabledCheck.Collectors {
+			mergedCollectors, err := collect.MergeCollectors(checkCollector, collectors)
+			if err != nil {
+				return errors.Wrap(err, "failed to merge collectors")
+			}
 
-	for _, check := range s.EnabledChecks {
-		// unmarshal from content each time so that each step can build on the last
-		// this is important because if an issue changes the line count in the workflow
-		// doing this will allow all remediation to still target the correct lines
+			collectors = mergedCollectors
+		}
+	}
 
-		parsedWorkflow := workflowtypes.GitHubWorkflow{}
-		if err := yaml.Unmarshal([]byte(s.getContent()), &parsedWorkflow); err != nil {
-			return errors.Wrap(err, "failed to parse workflow")
+	// execute collect phase
+	output := types.Output{
+		Repos: []*types.RepoOutput{},
+	}
+
+	for _, collector := range collectors {
+		// TODO is filename right here?
+		collectorOutput, err := collect.Collect(collector, s.Filename, s.OriginalContent)
+		if err != nil {
+			return errors.Wrap(err, "failed to collect collector")
 		}
 
-		if check == "unstable-github-ref" {
-			progress := s.Progress[check]
-			issues, err := unstablegithubref.DetectIssues(parsedWorkflow, progress.Set)
+		output.Repos = append(output.Repos, collectorOutput.Repos...)
+		output.Recommendations = collectorOutput.Recommendations
+	}
+	marshalledCollectors, err := json.Marshal(output)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal combined collectors")
+	}
+
+	// evaluation
+	evaluateResults := []evaluatetypes.EvaluateResult{}
+	for _, enabledCheck := range s.EnabledChecks {
+		for _, checkEvaluator := range enabledCheck.Evaluators {
+			evaluateOutput, err := evaluate.Evaluate(checkEvaluator, marshalledCollectors)
 			if err != nil {
-				return errors.Wrap(err, "failed to run unstable unstable-github ref check")
+				return errors.Wrap(err, "failed to evaluate")
 			}
 
-			s.Issues = append(s.Issues, issues...)
+			evaluateResults = append(evaluateResults, evaluateOutput...)
+		}
+	}
 
-			for _, i := range issues {
-				updated, err := unstablegithubref.RemediateIssue(s.getContent(), i)
-				if err != nil {
-					return errors.Wrap(err, "failed to apply remediation")
-				}
-				s.RemediatedContent = updated
-			}
-		} else if check == "unstable-docker-tag" {
-			progress := s.Progress[check]
-			issues, err := unstabledockertag.DetectIssues(parsedWorkflow, progress.Set)
-			if err != nil {
-				return errors.Wrap(err, "failed to run unstable unstable-docker-tag check")
-			}
+	reducedResults, err := evaluate.ReduceResults(evaluateResults)
+	if err != nil {
+		return errors.Wrap(err, "failed to reduce results")
+	}
 
-			s.Issues = append(s.Issues, issues...)
+	s.Results = reducedResults
 
-			for _, i := range issues {
-				updated, err := unstabledockertag.RemediateIssue(s.getContent(), i)
-				if err != nil {
-					return errors.Wrap(err, "failed to apply remediation")
-				}
-				s.RemediatedContent = updated
-			}
-		} else if check == "outdated-action" {
-			progress := s.Progress[check]
-			issues, err := outdatedaction.DetectIssues(parsedWorkflow, progress.Set)
-			if err != nil {
-				return errors.Wrap(err, "failed to run unstable outdated-action check")
-			}
+	// remediate
+	remediateResults := []remediatetypes.Remediation{}
+	s.RemediatedContent = s.OriginalContent
+	for _, evaluateResult := range s.Results {
+		// TODO this will not work if any remediation changes the line numbers
+		// we need a better solution
 
-			s.Issues = append(s.Issues, issues...)
+		remediation, err := remediate.Remediate(
+			string(s.RemediatedContent),
+			evaluateResult.OriginalLineNumber,
+			evaluateResult.OriginalContent,
+			evaluateResult.RemediatedContent,
+		)
+		if err != nil {
+			return errors.Wrap(err, "failed to apply remediation")
+		}
 
-			for _, i := range issues {
-				updated, err := outdatedaction.RemediateIssue(s.getContent(), i)
-				if err != nil {
-					return errors.Wrap(err, "failed to apply remediation")
-				}
-				s.RemediatedContent = updated
-			}
-		} else if check == "unfork-action" {
-			progress := s.Progress[check]
-			issues, err := unforkaction.DetectIssues(parsedWorkflow, progress.Set)
-			if err != nil {
-				return errors.Wrap(err, "failed to run unstable unfork-action check")
-			}
+		remediateResults = append(remediateResults, *remediation)
 
-			s.Issues = append(s.Issues, issues...)
-
-			for _, i := range issues {
-				updated, err := unforkaction.RemediateIssue(s.getContent(), i)
-				if err != nil {
-					return errors.Wrap(err, "failed to apply remediation")
-				}
-				s.RemediatedContent = updated
-			}
+		if remediation.WasRemediated {
+			s.RemediatedContent = []byte(remediation.AfterWorkflow)
 		}
 	}
 
@@ -181,8 +149,8 @@ func applyRemediation(content string, i issue.Issue) (string, error) {
 	return content, nil
 }
 
-func (s Scanner) getContent() string {
-	if s.RemediatedContent != "" {
+func (s Scanner) getContent() []byte {
+	if s.RemediatedContent != nil {
 		return s.RemediatedContent
 	}
 
