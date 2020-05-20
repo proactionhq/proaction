@@ -7,7 +7,7 @@ jobs:
     name: "simple"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.1.0
 
       - name: "not-merged"
         uses: marccampbell/proaction-test-actions@fork-update

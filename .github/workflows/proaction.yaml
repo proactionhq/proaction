@@ -10,7 +10,6 @@ jobs:
 
       - uses: proactionhq/proaction/action@v0.3.5
         with:
-          workflow-files: .github/workflows/build-test-deploy.yaml
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: peter-evans/create-pull-request@v2

@@ -5,9 +5,8 @@ type byPriority []string
 var (
 	weighted = map[string]int{
 		"unfork-action":       0,
-		"unstable-docker-tag": 1,
-		"unstable-github-ref": 2,
-		"outdated-action":     3,
+		"unstable-github-ref": 1,
+		"outdated-action":     2,
 	}
 )
 

@@ -1,0 +1,266 @@
+{
+    "recommendations": [
+        {
+            "owner": "actions",
+            "repo": "checkout",
+            "refType": "tag",
+            "refs": [
+                "v2",
+                "v1"
+            ]
+        },
+        {
+            "owner": "snyk",
+            "repo": "actions",
+            "refType": "tag",
+            "refs": [
+                "0.1.1"
+            ]
+        },
+        {
+            "owner": "digitalocean",
+            "repo": "action-doctl",
+            "refType": "tag",
+            "refs": [
+                "v2.0.0"
+            ]
+        }
+    ],
+    "repos": [
+        {
+            "workflow": "integration/simple-unstable-ref/workflow.yaml",
+            "lineNumber": 10,
+            "lineContent": "actions/checkout@v2",
+            "id": 197814629,
+            "owner": "actions",
+            "repo": "checkout",
+            "isPublic": true,
+            "isArchived": false,
+            "defaultBranch": "master",
+            "isFork": false,
+            "head": "",
+            "ref": "v2",
+            "refType": "tag",
+            "branches": [
+                {
+                    "name": "Update-description",
+                    "head": "3204e0bf8cc961de0423eafd557ab191aad42167"
+                },
+                {
+                    "name": "dependabot/npm_and_yarn/acorn-5.7.4",
+                    "head": "0df123bc841344c0e018d31d72ca2a29700adacd"
+                },
+                {
+                    "name": "ericsciple-patch-1",
+                    "head": "3ee0e5d57ce715355d3345ffc3fddbd8dbdf8066"
+                },
+                {
+                    "name": "ericsciple-patch-2",
+                    "head": "ee9f1aee1e96ab889c1d5e98f69b573f0786fa71"
+                },
+                {
+                    "name": "master",
+                    "head": "ac455590d1debd05854e62f352cf7a59e27328bc"
+                },
+                {
+                    "name": "releases/v1",
+                    "head": "0b496e91ec7ae4428c3ed2eeb4c3a40df431f2cc"
+                },
+                {
+                    "name": "revert-56-users/tihuang/checkoutV1_1",
+                    "head": "d8d55467a3a890e9c1a42ad0293d9800583e1975"
+                },
+                {
+                    "name": "test-data/v2/basic",
+                    "head": "82f71901cf8c021332310dcc8cdba84c4193ff5d"
+                },
+                {
+                    "name": "test-data/v2/lfs",
+                    "head": "c31ea53e3dcfe10e3cda3764d73db91824e12ab0"
+                },
+                {
+                    "name": "test-data/v2/side-by-side-1",
+                    "head": "09674d1f142cdd400fbab8ebef9da6d4e71aea5e"
+                },
+                {
+                    "name": "test-data/v2/side-by-side-2",
+                    "head": "bd6c7f5302f2e72720df996c731fd07340d3dd2b"
+                },
+                {
+                    "name": "test-data/v2/submodule-level-1",
+                    "head": "4b38027b4a366b8506eb90cfdc99c8208d3231c9"
+                },
+                {
+                    "name": "test-data/v2/submodule-level-2",
+                    "head": "b0599c1de9f0f399b0e3ddcc16a13ec016b97f18"
+                },
+                {
+                    "name": "test-data/v2/submodule-ssh-url-level-1",
+                    "head": "fdabad6f0e41e3685419b2777b40e55536df8f4d"
+                },
+                {
+                    "name": "test-data/v2/submodule-ssh-url-level-2",
+                    "head": "bff576b9eb271dd75b27ccce2966454cd24a85a7"
+                },
+                {
+                    "name": "test-data/v2/submodule-ssh-url",
+                    "head": "866cacb19d362682dffc1db961ab60d17769f9c6"
+                },
+                {
+                    "name": "test-data/v2/submodule",
+                    "head": "b7b9abb6ed6fd1853b215e685540ba0c76683e7a"
+                },
+                {
+                    "name": "users/ericsciple/m162pr",
+                    "head": "e9fadf668a281616d6f49bda0138b1591718b56c"
+                },
+                {
+                    "name": "users/ericsciple/m163tarball_efficient_download",
+                    "head": "096b500552f8ef398fe070364e7232be81bacad5"
+                },
+                {
+                    "name": "users/ericsciple/m163tarball_temp",
+                    "head": "43c99f2ebc10bbca89dbf02f810243366f3a56d5"
+                },
+                {
+                    "name": "users/ericsciple/m164submodule",
+                    "head": "ba227f5d10114d6a99fb019e14300d48a39f5990"
+                },
+                {
+                    "name": "users/ericsciple/m166refs",
+                    "head": "8c9b201842fab03dae0af014cd374d9c99dcfd56"
+                },
+                {
+                    "name": "users/ericsciple/m166username",
+                    "head": "7c56228b5b5d0303be064272e2b8917465833064"
+                },
+                {
+                    "name": "users/ericsciple/m167ssh",
+                    "head": "3fcc3107dbeea0718ed1f119ce3d31b6d79739bf"
+                },
+                {
+                    "name": "users/ericsciple/m167sub",
+                    "head": "95471c29b6462e0d1e07d7762cbdb57fcc277aec"
+                },
+                {
+                    "name": "users/ericsciple/m167workflow",
+                    "head": "c4551229371e8d29890b3b223cdf2c092af37a87"
+                },
+                {
+                    "name": "users/ericsciple/test-pr",
+                    "head": "4817b449b0ed7c775a0bcecaa398041ab5d09b51"
+                },
+                {
+                    "name": "users/tihuang/proxysupport",
+                    "head": "5acb8ff4c9243e23e2bcca7dc4865165af2327f1"
+                }
+            ],
+            "tags": [
+                {
+                    "name": "v2.1.0",
+                    "head": "01aecccf739ca6ff86c0539fbc67a7a5007bbc81"
+                },
+                {
+                    "name": "v2.0.0",
+                    "head": "722adc63f1aa60a57ec37892e133b1d319cae598"
+                },
+                {
+                    "name": "v2",
+                    "head": "01aecccf739ca6ff86c0539fbc67a7a5007bbc81"
+                },
+                {
+                    "name": "v2-beta",
+                    "head": "a6747255bd19d7a757dbdda8c654a9f84db19839"
+                },
+                {
+                    "name": "v1.2.0",
+                    "head": "50fbc622fc4ef5163becd7fab6573eac35f8462e"
+                },
+                {
+                    "name": "v1.1.0",
+                    "head": "0b496e91ec7ae4428c3ed2eeb4c3a40df431f2cc"
+                },
+                {
+                    "name": "v1.0.0",
+                    "head": "af513c7a016048ae468971c52ed77d9562c7c819"
+                },
+                {
+                    "name": "v1",
+                    "head": "50fbc622fc4ef5163becd7fab6573eac35f8462e"
+                },
+                {
+                    "name": "1.0.0",
+                    "head": "af513c7a016048ae468971c52ed77d9562c7c819"
+                }
+            ],
+            "commits": [
+                "ac455590d1debd05854e62f352cf7a59e27328bc",
+                "94c2de77cccf605d74201a8aec6dd8fc0717ad66",
+                "01aecccf739ca6ff86c0539fbc67a7a5007bbc81",
+                "85b1f35505da871133b65f059e96210c65650a8b",
+                "574281d34cf49767d4b75b691c4c4f4655e0c93f",
+                "fbb30c60ab3f94a2c03755a7fb875120c137bef7",
+                "58070a9fc3a91197fc9cbf24841ea31a2ab19980",
+                "9a3a9ade8222dcdf9d3c77710b10df47ee7c7c89",
+                "b2e6b7ed13bcde9d37c9e3e6967cd3ecfd2807ad",
+                "80602fafba6e982172195b721791020f4f17a227",
+                "b4626ce19ce1106186ddf9bb20e706842f11a7c3",
+                "422dc4567157f4d62b665a8a288310365b1d194b",
+                "204620207c9669dc859681b83d09302c7deb97ce",
+                "f2190623701cfebaaf26554b39e1e29cc4a1f2fb",
+                "096e9277500008410ac4dd98a7bb0d9052330de8",
+                "f858c22e963bc60bc9d01c3d105c52a45a7deb6e",
+                "77904fd4316d60fc138fe2b8286ca220f763853e",
+                "06218e4404b044c23590a921fa858fb632a41afe",
+                "61fd8fd0c7a28ab9f73c23c595edbd0550bf0e78",
+                "f95f2a38561736d1542cb9fbf736eea3d00ab5a6",
+                "f90c7b395dac7c5a277c1a6d93d5057c1cddb74e",
+                "090d9c9dfda6bb13508d978c6be93801de84f967",
+                "db41740e12847bb616a339b75eb9414e711417df",
+                "bc50a995b88ec9334cb2f3b1c49502d9834ed2c5",
+                "dfd70d4a2dece5f4a1af8dc99e1508a16e916b60",
+                "ae525b22625099736a2909d0eb22ec50cbe398fc",
+                "f466b96953a8e78166c9b97a44a70220f1a3e77e",
+                "c85684db76ba6ef08713c10cf4befe3318887415",
+                "299dd5064ede81803aeb1ce63fee4e150d9ae5f1",
+                "722adc63f1aa60a57ec37892e133b1d319cae598"
+            ]
+        },
+        {
+            "workflow": "integration/simple-unstable-ref/workflow.yaml",
+            "lineNumber": 13,
+            "lineContent": "proactionhq/proaction-test-actions@master",
+            "id": 240969696,
+            "owner": "proactionhq",
+            "repo": "proaction-test-actions",
+            "isPublic": true,
+            "isArchived": false,
+            "defaultBranch": "master",
+            "isFork": false,
+            "head": "",
+            "ref": "master",
+            "refType": "branch",
+            "branches": [
+                {
+                    "name": "master",
+                    "head": "dfcd6a3a9095db0a9bc30dc8f24d9edaf3fe9331"
+                }
+            ],
+            "tags": [
+                {
+                    "name": "v1",
+                    "head": "051cbb9a6b1f2817dc4fb820897f81d449046bfc"
+                }
+            ],
+            "commits": [
+                "dfcd6a3a9095db0a9bc30dc8f24d9edaf3fe9331",
+                "41d401e5975daf59449cf25f4964929e9edf98f9",
+                "45c75dda2f985ee175af97df6d7c92517b412066",
+                "8aff6dc44938cd3171b645cff7c12c5814f77e21",
+                "41eb7b509e10f46732191593e99434c8b165c2bc",
+                "6207cbd0ffb6242268d091ef4ae25f1df1fdcfe6",
+                "051cbb9a6b1f2817dc4fb820897f81d449046bfc"
+            ]
+        }
+    ]
+}
