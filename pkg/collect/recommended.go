@@ -21,13 +21,13 @@ type Recommended struct {
 }
 
 func loadRecommendationsFromWeb() error {
-	masterURI := "https://raw.githubusercontent.com/proactionhq/proaction/master/pkg/checks/unstable-github-ref/recommended-action-refs.json"
+	masterURI := "https://raw.githubusercontent.com/proactionhq/proaction/master/pkg/collect/recommended-action-refs.json"
 
 	uri := ""
 
 	currentSemver, err := semver.NewVersion(version.Version())
 	if err == nil {
-		uri = fmt.Sprintf("https://raw.githubusercontent.com/proactionhq/proaction/v%s/pkg/checks/unstable-github-ref/recommended-action-refs.json", currentSemver.String())
+		uri = fmt.Sprintf("https://raw.githubusercontent.com/proactionhq/proaction/v%s/pkg/collect/recommended-action-refs.json", currentSemver.String())
 	}
 
 	if uri != "" {
