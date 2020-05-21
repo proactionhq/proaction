@@ -28,32 +28,6 @@ findTagSHA(tagName, tags) = output {
   output := tag.head
 }
 
-contains(refs, ref) {
-  maybeRef := refs[_]
-  maybeRef == ref
-}
-
-containsRef(desiredRefType, desiredRefs, actualRefType, actualRef) {
-  desiredRefType == actualRefType
-  contains(desiredRefs, actualRef)
-}
-
-# static recommendation
-recommendations[output] {
-  repo := input.repos[_]
-  recommendations := [r | input.recommendations[i].owner == repo.owner; r := input.recommendations[i]]
-  recommendations = [r | input.recommendations[i].repo == repo.repo; r := input.recommendations[i]]
-  rec := recommendations[_]
-
-  not containsRef(rec.refType, rec.refs, repo.refType, repo.ref)
-
-  recommendation := {
-    "ref": rec.refs[0],
-    "refType": rec.refType
-  }
-  output = buildOutput(repo, "isStaticRecommendation", recommendation)
-}
-
 # if already on a tag, recommend the latest tag
 recommendations[output] {
   repo := input.repos[_]

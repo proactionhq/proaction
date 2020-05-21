@@ -9,6 +9,8 @@ import (
 
 func FromString(checkType string) (*types.Check, error) {
 	switch checkType {
+	case "recommendations":
+		return Recommendations(), nil
 	case "unstable-github-ref":
 		return UnstableGitHubRef(), nil
 	case "outdated-action":
