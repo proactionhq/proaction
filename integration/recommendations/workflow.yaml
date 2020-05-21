@@ -1,0 +1,11 @@
+name: ""
+on:
+  - pull_request
+
+jobs:
+  terraform:
+    name: "simple"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: digitalocean/action-doctl@v2.0.0
+      - uses: digitalocean/action-doctl@7f3a996

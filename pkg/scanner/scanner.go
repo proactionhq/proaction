@@ -31,6 +31,7 @@ type Scanner struct {
 	Results []evaluatetypes.EvaluateResult
 }
 
+// NewScanner returns an instance of the scanner for filename and content
 func NewScanner(filename string, content []byte) (*Scanner, error) {
 	parsedWorkflow := workflowtypes.GitHubWorkflow{}
 	if err := yaml.Unmarshal(content, &parsedWorkflow); err != nil {
@@ -58,6 +59,7 @@ func (s *Scanner) EnableChecks(checks []*checktypes.Check) {
 
 func (s *Scanner) EnableAllChecks() {
 	s.EnabledChecks = []*checktypes.Check{
+		checks.Recommendations(),
 		checks.UnstableGitHubRef(),
 		checks.Outdated(),
 		checks.Unfork(),
