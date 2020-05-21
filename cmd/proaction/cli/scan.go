@@ -57,6 +57,12 @@ func ScanCmd() *cobra.Command {
 				return errors.Wrap(err, "failed to parse args")
 			}
 
+			// if there are URIs, we force the "diff" flag
+			// because otherwise we'd be changing tmp files
+			if len(uris) > 0 {
+				v.Set("diff", true)
+			}
+
 			for _, filename := range files {
 				workflowContent, err := readWorkflowContentFromFile(filename)
 				if err != nil {
