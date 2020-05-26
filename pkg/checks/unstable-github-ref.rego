@@ -48,6 +48,7 @@ recommendations[output] {
 }
 
 # unstable if it's any branch, unless a recommendation is a branch
+## and there are no tags
 recommendations[output] {
   repo := input.repos[_]
   repo.refType == "branch"
@@ -58,6 +59,19 @@ recommendations[output] {
   ## know about the branch, and will update
   ## to the latest commit
   ## TODO ^^
+
+  count(repo.tags) == 0
   recommendation := recommendLatestCommit(repo)
+  output := buildOutput(repo, "isBranch", recommendation)
+}
+
+# unstable if it's any branch, unless a recommendation is a branch
+## and there are tags
+recommendations[output] {
+  repo := input.repos[_]
+  repo.refType == "branch"
+
+  count(repo.tags) > 0
+  recommendation := recommendLatestTag(repo)
   output := buildOutput(repo, "isBranch", recommendation)
 }
