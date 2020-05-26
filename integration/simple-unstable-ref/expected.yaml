@@ -10,4 +10,4 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: "simplejs"
-        uses: proactionhq/proaction-test-actions@dfcd6a3
+        uses: proactionhq/proaction-test-actions@v1
