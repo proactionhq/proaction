@@ -71,4 +71,4 @@ snapcrafts:
       suggesting changes that will improve reliability and create more
       reproducible workflow executions.
     confinement: classic
-    license: Apache2
+    license: Apache-2.0
