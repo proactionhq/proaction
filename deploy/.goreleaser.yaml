@@ -58,18 +58,17 @@ brews:
     description: "Build better GitHub Action Workflows"
     skip_upload: false
 
-## need snapcrap installed before we can do this
-# snapcrafts:
-#   - id: proaction
-#     builds:
-#       - proaction
-#     name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}"
-#     name: proaction
-#     publish: true
-#     summary: "Build better GitHub Action Workflows"
-#     description: |
-#       Proaction is a CLI that improves your GitHub Action workflows by
-#       suggesting changes that will improve reliability and create more
-#       reproducible workflow executions.
-#     confinement: classic
-#     license: Apache2
+snapcrafts:
+  - id: proaction
+    builds:
+      - proaction
+    name_template: "{{ .Binary }}_{{ .Os }}_{{ .Arch }}"
+    name: proaction
+    publish: true
+    summary: "Build better GitHub Action Workflows"
+    description: |
+      Proaction is a CLI that improves your GitHub Action workflows by
+      suggesting changes that will improve reliability and create more
+      reproducible workflow executions.
+    confinement: classic
+    license: Apache2

@@ -72,6 +72,11 @@ jobs:
           username: proactionbot
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Install Snapcraft
+        uses: samuelmeuli/action-snapcraft@v1
+        with:
+          snapcraft_token: ${{ secrets.SNAPCRAFT_TOKEN }}
+      
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v1.5.1
         with:
