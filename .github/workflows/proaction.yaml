@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron:  "0 0 * * *"
+    - cron:  "/15 * * * *"
 
 jobs:
   run-proaction:
@@ -10,7 +10,7 @@ jobs:
 
       - uses: proactionhq/proaction/action@v0.4.2
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: peter-evans/create-pull-request@v2
         with:
