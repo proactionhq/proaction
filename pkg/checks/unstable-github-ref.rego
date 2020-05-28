@@ -11,7 +11,7 @@ buildOutput(repo, reason, recommendation) = built {
     "workflow": repo.workflow,
     "originalLineNumber": to_number(repo.lineNumber),
     "originalContent": repo.lineContent,
-    "remediatedContent": sprintf("%s/%s@%s", [repo.owner, repo.repo, recommendation.ref])
+    "remediatedContent": sprintf("%s/%s%s@%s", [repo.owner, repo.repo, repo.path, recommendation.ref])
   }
 }
 
