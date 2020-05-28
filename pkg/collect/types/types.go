@@ -31,6 +31,7 @@ type RepoOutput struct {
 	ID            int64    `json:"id"`
 	Owner         string   `json:"owner"`
 	Repo          string   `json:"repo"`
+	Path          string   `json:"path"`
 	IsPublic      bool     `json:"isPublic"`
 	IsArchived    bool     `json:"isArchived"`
 	DefaultBranch string   `json:"defaultBranch"`

@@ -11,3 +11,7 @@ jobs:
 
       - name: "simplejs"
         uses: proactionhq/proaction-test-actions@6207cbd
+
+      - uses: proactionhq/proaction/action@v0.4.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

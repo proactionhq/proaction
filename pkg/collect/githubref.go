@@ -2,6 +2,7 @@ package collect
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/go-github/v28/github"
 	"github.com/pkg/errors"
@@ -22,14 +23,14 @@ func parseGitHubRef(workflowInfo types.WorkflowInfo, collectors []string) (*type
 		WorkflowInfo: workflowInfo,
 	}
 
-	owner, repo, _, unknownRef, err := ref.RefToParts(workflowInfo.LineContent)
+	owner, repo, path, unknownRef, err := ref.RefToParts(workflowInfo.LineContent)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse ref")
 	}
 
 	for _, collector := range collectors {
 		if collector == "repo.info" {
-			err := retrieveRepoInfo(owner, repo, &repoOutput)
+			err := retrieveRepoInfo(owner, repo, path, &repoOutput)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to get repo info")
 			}
@@ -63,7 +64,7 @@ func parseGitHubRef(workflowInfo types.WorkflowInfo, collectors []string) (*type
 	return &output, nil
 }
 
-func retrieveRepoInfo(owner string, repo string, output *types.RepoOutput) error {
+func retrieveRepoInfo(owner string, repo string, path string, output *types.RepoOutput) error {
 	githubClient := githubapi.NewGitHubClient()
 
 	githubRepo, _, err := githubClient.Repositories.Get(context.Background(), owner, repo)
@@ -82,6 +83,10 @@ func retrieveRepoInfo(owner string, repo string, output *types.RepoOutput) error
 	output.Head = "" // TODO
 	if githubRepo.GetParent() != nil {
 		output.Parent = githubRepo.GetParent().GetFullName()
+	}
+
+	if path != "" {
+		output.Path = fmt.Sprintf("/%s", path)
 	}
 
 	return nil
