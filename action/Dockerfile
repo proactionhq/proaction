@@ -1,4 +1,4 @@
-FROM proactionhq/proaction:0.4.2
+FROM proactionhq/proaction:0.4.3
 
 LABEL "com.github.actions.name"="Proaction"
 LABEL "com.github.actions.description"="Create more reliable, maintainable, and secure GitHub Actions"
