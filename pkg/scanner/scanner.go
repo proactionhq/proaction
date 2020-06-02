@@ -62,7 +62,7 @@ func (s *Scanner) EnableAllChecks() {
 		checks.Recommendations(),
 		checks.UnstableGitHubRef(),
 		checks.Outdated(),
-		checks.Unfork(),
+		// checks.Unfork(),
 	}
 }
 
