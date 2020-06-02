@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: proactionhq/proaction/action@v0.4.4
+      - uses: proactionhq/proaction/action@v0.4.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
