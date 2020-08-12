@@ -7,7 +7,7 @@ jobs:
     name: "simple"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.2.0
+      - uses: actions/checkout@v2.3.2
 
       - name: "simplejs"
         uses: proactionhq/proaction-test-actions@dfcd6a3
