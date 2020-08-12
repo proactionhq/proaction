@@ -28,6 +28,12 @@ func parseGitHubRef(workflowInfo types.WorkflowInfo, collectors []string) (*type
 		return nil, errors.Wrap(err, "failed to parse ref")
 	}
 
+	if owner == "" {
+		// this is a local ref, ignore it
+		output.Repos = []*types.RepoOutput{}
+		return &output, nil
+	}
+
 	for _, collector := range collectors {
 		if collector == "repo.info" {
 			err := retrieveRepoInfo(owner, repo, path, &repoOutput)

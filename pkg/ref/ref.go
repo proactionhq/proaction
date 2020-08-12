@@ -23,6 +23,10 @@ type Branch struct {
 
 // RefToParts takes a uses reference and splits into owner, repo, path and ref
 func RefToParts(ref string) (string, string, string, string, error) {
+	if strings.HasPrefix(ref, "./") {
+		return "", "", "", "", nil
+	}
+
 	splitRef := strings.Split(ref, "@")
 
 	if len(splitRef) < 2 {

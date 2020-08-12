@@ -1,0 +1,9 @@
+name: ""
+on:
+  - pull_request
+
+jobs:
+  test:
+    steps:
+    - name: "test"
+    - uses: ./actions/containers
